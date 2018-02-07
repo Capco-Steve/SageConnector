@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SageConnector", "SageConnector\SageConnector.csproj", "{0A958A05-177A-4750-8CF4-C06DE396EB1D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTLib", "MTLib\MTLib.csproj", "{17F40ED4-0C14-4579-9EFF-E0FF9E0029DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SageLib", "SageLib\SageLib.csproj", "{7A84FCE6-8421-40AE-84E7-1B209CDFD696}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A958A05-177A-4750-8CF4-C06DE396EB1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A958A05-177A-4750-8CF4-C06DE396EB1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A958A05-177A-4750-8CF4-C06DE396EB1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A958A05-177A-4750-8CF4-C06DE396EB1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17F40ED4-0C14-4579-9EFF-E0FF9E0029DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17F40ED4-0C14-4579-9EFF-E0FF9E0029DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17F40ED4-0C14-4579-9EFF-E0FF9E0029DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17F40ED4-0C14-4579-9EFF-E0FF9E0029DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A84FCE6-8421-40AE-84E7-1B209CDFD696}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A84FCE6-8421-40AE-84E7-1B209CDFD696}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A84FCE6-8421-40AE-84E7-1B209CDFD696}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A84FCE6-8421-40AE-84E7-1B209CDFD696}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1AD975C8-7606-4631-9493-1070763B36E9}
+	EndGlobalSection
+EndGlobal
