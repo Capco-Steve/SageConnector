@@ -45,18 +45,51 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MineralTree.cs" />
+    <Compile Include="MTApi.cs" />
     <Compile Include="MTSettings.cs" />
+    <Compile Include="Objects\AccountBalance.cs" />
     <Compile Include="Objects\Address.cs" />
+    <Compile Include="Objects\Amount.cs" />
+    <Compile Include="Objects\AvailableBalance.cs" />
     <Compile Include="Objects\BankAccount.cs" />
     <Compile Include="Objects\Company.cs" />
+    <Compile Include="Objects\Cost.cs" />
+    <Compile Include="Objects\Department.cs" />
+    <Compile Include="Objects\DepartmentRoot.cs" />
+    <Compile Include="Objects\Expenses.cs" />
     <Compile Include="Objects\FundingMethod.cs" />
+    <Compile Include="Objects\GlAccount.cs" />
+    <Compile Include="Objects\GlAccountRoot.cs" />
+    <Compile Include="Objects\Item.cs" />
+    <Compile Include="Objects\Items.cs" />
+    <Compile Include="Objects\Location.cs" />
+    <Compile Include="Objects\LocationRoot.cs" />
+    <Compile Include="Objects\ObjID.cs" />
+    <Compile Include="Objects\PaymentMethod.cs" />
+    <Compile Include="Objects\PaymentMethodRoot.cs" />
     <Compile Include="Objects\Phone.cs" />
     <Compile Include="Objects\PrimarySubsidiary.cs" />
+    <Compile Include="Objects\PurchaseOrder.cs" />
+    <Compile Include="Objects\PurchaseOrderItem.cs" />
+    <Compile Include="Objects\Quantity.cs" />
+    <Compile Include="Objects\Residual.cs" />
+    <Compile Include="Objects\ItemRoot.cs" />
+    <Compile Include="Objects\SearchQuery.cs" />
+    <Compile Include="Objects\Subsidiary.cs" />
+    <Compile Include="Objects\Term.cs" />
+    <Compile Include="Objects\TermRoot.cs" />
     <Compile Include="Objects\User.cs" />
+    <Compile Include="Objects\UserRoot.cs" />
     <Compile Include="Objects\Vendor.cs" />
     <Compile Include="Objects\VendorCompanyDefault.cs" />
+    <Compile Include="Objects\VendorRoot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <Project>{7afff2a7-0b99-4744-bfa8-f7176235cd82}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

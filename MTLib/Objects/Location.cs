@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class BankAccount
+	public class Location
 	{
+		public string id { get; set; }
+		public List<Subsidiary> subsidiaries { get; set; }
+		public string externalId { get; set; }
 		public string name { get; set; }
-		public string accountNumber { get; set; }
-		public string routingNumber { get; set; }
-		public AccountBalance accountBalance { get; set; }
+		public bool active { get; set; }
 	}
+
 }

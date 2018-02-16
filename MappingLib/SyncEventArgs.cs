@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MTLib.Objects
+namespace SyncLib
 {
-	public class PrimarySubsidiary
+	public class SyncEventArgs : EventArgs
 	{
-		public string id { get; set; } = "";
+		public string Message { get; set; } = "";
 	}
 }

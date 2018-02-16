@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class ObjID
 	{
 		public string id { get; set; } = "";
 	}

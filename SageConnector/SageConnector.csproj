@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Software\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -54,7 +58,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SCSettings.cs" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -81,9 +84,21 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MappingLib\SyncLib.csproj">
+      <Project>{42977134-7e3c-4abc-9704-27e25c38d842}</Project>
+      <Name>SyncLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MTLib\MTLib.csproj">
       <Project>{17f40ed4-0c14-4579-9eff-e0ff9e0029dc}</Project>
       <Name>MTLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SageLib\SageLib.csproj">
+      <Project>{7a84fce6-8421-40ae-84e7-1b209cdfd696}</Project>
+      <Name>SageLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <Project>{7afff2a7-0b99-4744-bfa8-f7176235cd82}</Project>
+      <Name>Utils</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

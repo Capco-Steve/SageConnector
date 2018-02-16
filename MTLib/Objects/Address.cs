@@ -11,15 +11,15 @@ namespace MTLib.Objects
 	/// </summary>
 	public class Address
 	{
-		string name { get; set; }				// address name
-		string address1 { get; set; }			// Address line 1
-		string address2 { get; set; }			// Address line 2
-		string address3 { get; set; }			// Address line 3
-		string address4 { get; set; }			// Address line 4
-		string address5 { get; set; }			// Address line 5
-		string postalCode { get; set; }			// Postal or Zipcode
-		string town { get; set; }				// City or Town
-		string ctrySubDivision { get; set; }	// State/Region
-		string country { get; set; }            // Country
+		public string name { get; set; } = "";
+		public string address1 { get; set; } = "";
+		public string address2 { get; set; } = "";
+		public string address3 { get; set; } = "";
+		public string address4 { get; set; } = "";
+		public string address5 { get; set; } = "";
+		public string postalCode { get; set; } = "";
+		public string town { get; set; } = "";
+		public string ctrySubDivision { get; set; } = "";
+		public string country { get; set; } = "";
 	}
 }

@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class UserRoot
 	{
-		public string id { get; set; } = "";
+		public User user{get;set;}
+		public List<Company> companies { get; set; }
 	}
 }

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class GlAccountRoot
 	{
-		public string id { get; set; } = "";
+		public GlAccount glAccount { get; set; }
 	}
 }

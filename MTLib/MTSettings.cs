@@ -12,6 +12,21 @@ namespace MTLib
 	/// </summary>
 	public static class MTSettings
 	{
+		public static string MTUsername
+		{
+			get { return ConfigurationManager.AppSettings["MTUsername"]; }
+		}
+
+		public static string MTPassword
+		{
+			get { return ConfigurationManager.AppSettings["MTPassword"]; }
+		}
+
+		public static bool LogHTTPRequests
+		{
+			get{ return ConfigurationManager.AppSettings["LogHTTPRequests"].ToLower() == "true" ? true : false; }
+		}
+
 		public static string BaseUrl
 		{
 			get{ return ConfigurationManager.AppSettings["BaseUrl"];}
@@ -35,6 +50,41 @@ namespace MTLib
 		public static string UserCompaniesUrl
 		{
 			get { return ConfigurationManager.AppSettings["UserCompaniesUrl"]; }
+		}
+
+		public static string SearchUrl
+		{
+			get { return ConfigurationManager.AppSettings["SearchUrl"]; }
+		}
+
+		public static string DepartmentUrl
+		{
+			get { return ConfigurationManager.AppSettings["DepartmentUrl"]; }
+		}
+
+		public static string ItemUrl
+		{
+			get { return ConfigurationManager.AppSettings["ItemUrl"]; }
+		}
+
+		public static string GlAccountUrl
+		{
+			get { return ConfigurationManager.AppSettings["GlAccountUrl"]; }
+		}
+
+		public static string LocationUrl
+		{
+			get { return ConfigurationManager.AppSettings["LocationUrl"]; }
+		}
+
+		public static string TermUrl
+		{
+			get { return ConfigurationManager.AppSettings["TermUrl"]; }
+		}
+
+		public static string PaymentMethodUrl
+		{
+			get { return ConfigurationManager.AppSettings["PaymentMethodUrl"]; }
 		}
 	}
 }

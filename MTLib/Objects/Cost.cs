@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class Cost
 	{
-		public string id { get; set; } = "";
+		public decimal amount { get; set; } = 0;
+		public int precision { get; set; } = 2;
 	}
+
 }

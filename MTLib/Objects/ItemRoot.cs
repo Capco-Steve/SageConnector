@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class ItemRoot
 	{
-		public string id { get; set; } = "";
+		public Item item { get; set; }
 	}
 }

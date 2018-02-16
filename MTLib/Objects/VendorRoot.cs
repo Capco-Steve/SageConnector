@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SageLib
+namespace MTLib.Objects
 {
-    public class Class1
-    {
-    }
+	public class VendorRoot
+	{
+		public Vendor vendor { get; set; }
+	}
 }

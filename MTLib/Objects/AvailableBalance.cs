@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class PrimarySubsidiary
+	public class AvailableBalance
 	{
-		public string id { get; set; } = "";
+		public decimal amount { get; set; }
 	}
+
 }
