@@ -71,6 +71,7 @@
     <Compile Include="Objects\PrimarySubsidiary.cs" />
     <Compile Include="Objects\PurchaseOrder.cs" />
     <Compile Include="Objects\PurchaseOrderItem.cs" />
+    <Compile Include="Objects\PurchaseOrderRoot.cs" />
     <Compile Include="Objects\Quantity.cs" />
     <Compile Include="Objects\Residual.cs" />
     <Compile Include="Objects\ItemRoot.cs" />

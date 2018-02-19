@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using MTLib;
 using MTLib.Objects;
 using SageLib;
-using Supplier = Sage.Accounting.PurchaseLedger.Supplier;
+using SageSupplier = Sage.Accounting.PurchaseLedger.Supplier;
 using Bank = Sage.Accounting.CashBook.Bank;
-using Department = Sage.Accounting.SystemManager.Department;
+using SageDepartment = Sage.Accounting.SystemManager.Department;
 using StockItem = Sage.Accounting.Stock.StockItem;
 using NominalCode = Sage.Accounting.NominalLedger.NominalCode;
 using CostCentre = Sage.Accounting.SystemManager.CostCentre;
@@ -69,6 +69,11 @@ namespace SyncLib
 
 			string companyid = found.id;
 
+			Progress("Loading Reference Data");
+
+			// MAYBE SHOULD DO THIS AFTER THE VENDOR, REFERENCE DATA SYNC SO WE PICK UP THE LATEST DATA???
+			MTReferenceData.LoadReferenceData(companyid, sessiontoken);
+
 			Progress(string.Format("Syncing to Mineral Tree Company: {0}", found.name));
 
 			if(SageApi.Connect())
@@ -89,7 +94,9 @@ namespace SyncLib
 			//SageNominalCodesToMineralTreeGLAccounts(companyid, sessiontoken);
 			//SageCostCentresToMineralTreeLocations(companyid, sessiontoken);
 			//SagePaymentTermsToMineralTreeTerms(companyid, sessiontoken);
+
 			SagePurchaseOrdersToMineralTreePurchaseOrders(companyid, sessiontoken);
+			// TODO, INVOICES, PAYMENTS
 
 			Progress(string.Format("End Sync - {0} error(s)", Errors));
 			return;
@@ -121,14 +128,14 @@ namespace SyncLib
 		{
 			Progress("Start Syncing Suppliers...");
 			// GET ALL THE SAGE SUPPLIERS AND CREATE A LIST OF CORRESPONDING VENDORS TO SYNC WITH MINERAL TREE
-			List<Supplier> suppliers = SageApi.GetSuppliers();
+			List<SageSupplier> suppliers = SageApi.GetSuppliers();
 			Progress(string.Format("Loaded {0} Suppliers from Sage", suppliers.Count()));
 
 			// GET ALL THE VENDORS ALREADY LOADED INTO MINERAL TREE
 			List<VendorRoot> vendors = MTApi.GetVendorByCompanyID(companyid, sessiontoken);
 			Progress(string.Format("Loaded {0} existing vendors from Mineral Tree", vendors.Count()));
 
-			foreach (Supplier supplier in suppliers)
+			foreach (SageSupplier supplier in suppliers)
 			{
 				// DOES THE VENDOR ALREADY EXIST? SAGE SOURCE REFERENCE == MT EXTERNAL ID
 				VendorRoot found = vendors.Find(o => o.vendor.externalId == supplier.SourceReference);
@@ -188,12 +195,11 @@ namespace SyncLib
 		public static bool SageDepartmentsToMineralTreeDepartments(string companyid, string sessiontoken)
 		{
 			// GET ALL THE SAGE DEPARTMENTS TO SYNC WITH MINERAL TREE
-			List<Department> departments = SageApi.GetDepartments();
+			List<SageDepartment> departments = SageApi.GetDepartments();
 
-			foreach (Department department in departments)
+			foreach (SageDepartment department in departments)
 			{
 				DepartmentRoot departmentroot = Mapper.SageDepartmentToMTDepartment(department);
-
 				MTApi.CreateDepartment(companyid, departmentroot, sessiontoken);
 			}
 
@@ -285,8 +291,7 @@ namespace SyncLib
 
 			foreach (POPOrder order in orders)
 			{
-				//order.Supplier.SourceReference
-				//POPOrderRoot orderroot = Mapper.SagePaymentTermsToMTTerms(term);
+				PurchaseOrderRoot poroot = Mapper.SagePurchaseOrderToMTPurchaseOrder(order);
 				//MTApi.CreateTerm(companyid, termroot, sessiontoken);
 			}
 

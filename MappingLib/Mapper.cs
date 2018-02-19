@@ -13,6 +13,8 @@ using SageStockItem = Sage.Accounting.Stock.StockItem;
 using SageNominalCode = Sage.Accounting.NominalLedger.NominalCode;
 using SageCostCentre = Sage.Accounting.SystemManager.CostCentre;
 using Bank = Sage.Accounting.CashBook.Bank;
+using POPOrder = Sage.Accounting.POP.POPOrder;
+
 
 namespace SyncLib
 {
@@ -249,6 +251,25 @@ namespace SyncLib
 		
 			methodroot.paymentMethod = method;
 			return methodroot;
+		}
+
+		#endregion
+
+		#region PURCHASE ORDER
+
+		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder)
+		{
+			PurchaseOrderRoot purchaseorderroot = new PurchaseOrderRoot();
+			PurchaseOrder purchaseorder = new PurchaseOrder();
+
+			// GET THE VENDOR ID FROM MINERAL TREE
+			VendorRoot vr = MTReferenceData.FindVendorByExternalID(poporder.Supplier.SourceReference);
+			purchaseorder.vendor = new ObjID() { id = vr.vendor.id };
+			// NEED TO ALSO OBTAIN CLASSIFICATION, DEPARTMENT, LOCATION, ETC
+
+
+			purchaseorderroot.purchaseOrder = purchaseorder;
+			return purchaseorderroot;
 		}
 
 		#endregion
