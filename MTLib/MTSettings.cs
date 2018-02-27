@@ -86,5 +86,20 @@ namespace MTLib
 		{
 			get { return ConfigurationManager.AppSettings["PaymentMethodUrl"]; }
 		}
+
+		public static string PurchaseOrderUrl
+		{
+			get { return ConfigurationManager.AppSettings["PurchaseOrderUrl"]; }
+		}
+
+		public static string BillUrl
+		{
+			get { return ConfigurationManager.AppSettings["BillUrl"]; }
+		}
+
+		public static string CreditUrl
+		{
+			get { return ConfigurationManager.AppSettings["CreditUrl"]; }
+		}
 	}
 }

@@ -46,19 +46,15 @@ namespace SageConnector
 
 		private void btnSearch_Click(object sender, EventArgs e)
 		{
-			PurchaseOrder po = new PurchaseOrder();
-			po.externalId = "test";
-			po.vendor = new ObjID() { id = "vendorid" };
-			po.classification = new ObjID() { id = "classificationid" };
-
-			string json = JsonConvert.SerializeObject(po);
-
-			int y = 10;
 			//txtResults.Text = "";
 			//Write("Start Search");
-			//string sessiontoken = MTApi.GetSessionToken();
-			//List<Company> companies = MTApi.GetCompaniesForCurrentUser(sessiontoken);
-			//Company found = companies.Find(o => o.name == "CAPCO Company");
+			string sessiontoken = MTApi.GetSessionToken();
+			List<Company> companies = MTApi.GetCompaniesForCurrentUser(sessiontoken);
+			Company found = companies.Find(o => o.name == "CAPCO Company");
+
+			List<Bill> bills = MTApi.GetBillsWithNoExternalID(companies[0].id, sessiontoken);
+
+			int y = 10;
 			//List<VendorRoot> vendors = MTApi.GetVendorByCompanyID(companies[0].id, sessiontoken);
 			//VendorRoot vr = MTApi.GetVendorByExternalID(found.id, "ATL001", sessiontoken);
 			//Write("End Search");

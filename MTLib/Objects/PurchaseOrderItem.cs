@@ -8,11 +8,11 @@ namespace MTLib.Objects
 {
 	public class PurchaseOrderItem
 	{
-		public ObjID companyItem { get; set; }
-		public ObjID classification { get; set; }
-		public ObjID department { get; set; }
-		public ObjID location { get; set; }
-		public ObjID glAccount { get; set; }
+		//public ObjID companyItem { get; set; }
+		//public ObjID classification { get; set; }
+		//public ObjID department { get; set; }
+		//public ObjID location { get; set; }
+		//public ObjID glAccount { get; set; }
 		public string name { get; set; }
 		public Quantity quantity { get; set; }
 		public Quantity quantityReceived { get; set; }

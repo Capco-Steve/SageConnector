@@ -14,7 +14,7 @@ using SageNominalCode = Sage.Accounting.NominalLedger.NominalCode;
 using SageCostCentre = Sage.Accounting.SystemManager.CostCentre;
 using Bank = Sage.Accounting.CashBook.Bank;
 using POPOrder = Sage.Accounting.POP.POPOrder;
-
+using PostedPurchaseAccountEntry = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry;
 
 namespace SyncLib
 {
@@ -33,7 +33,7 @@ namespace SyncLib
 			vendor.id = "";
 			vendor.form1099Enabled = false;
 			vendor.externalId = supplier.SourceReference;
-			vendor.name = supplier.ShortName;
+			vendor.name = supplier.Name;
 			vendor.active = true; // TODO - MIGHT CHANGE WHEN WE FIGURE OUT THE MATCHING FIELD
 
 			vendor.address = new Address
@@ -119,7 +119,7 @@ namespace SyncLib
 
 		#endregion
 
-		#region ITEM
+		#region STOCKITEM / ITEM
 
 		public static ItemRoot SageStockItemToMTItem(SageStockItem sagestockitem)
 		{
@@ -262,10 +262,49 @@ namespace SyncLib
 			PurchaseOrderRoot purchaseorderroot = new PurchaseOrderRoot();
 			PurchaseOrder purchaseorder = new PurchaseOrder();
 
+			purchaseorder.externalId = poporder.DocumentNo;
+
 			// GET THE VENDOR ID FROM MINERAL TREE
-			VendorRoot vr = MTReferenceData.FindVendorByExternalID(poporder.Supplier.SourceReference);
-			purchaseorder.vendor = new ObjID() { id = vr.vendor.id };
-			// NEED TO ALSO OBTAIN CLASSIFICATION, DEPARTMENT, LOCATION, ETC
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(poporder.Supplier.SourceReference);
+			if (vendor == null) { return null; }
+			purchaseorder.vendor = new ObjID() { id = vendor.id };
+			// NEED TO ALSO OBTAIN DEPARTMENT, LOCATION, SUBSIDIARY AND TERMS.
+			// WHEN MINERAL TREE PROVIDE API ACCESS
+
+			purchaseorder.dueDate = poporder.DocumentDate.ToString("yyyy-MM-dd");
+			purchaseorder.poNumber = poporder.DocumentNo;
+			purchaseorder.memo = "";
+			purchaseorder.state = "PendingBilling";
+			purchaseorder.poType = "Standard"; // ??
+			//purchaseorder.expenses = null; // ??
+
+			// PURCHASE ORDER ITEMS
+			List<PurchaseOrderItem> items = new List<PurchaseOrderItem>();
+			int linenumber = 1;
+			foreach(Sage.Accounting.POP.POPOrderReturnLine line in poporder.Lines)
+			{
+				PurchaseOrderItem item = new PurchaseOrderItem();
+
+				//item.companyItem = i think this is item object
+				//item.classification = 
+				//item.department = 
+				//item.location = 
+				//item.glAccount = 
+				item.name = "Test"; // line.LineDescription;
+				item.quantity = new Quantity() { value = line.LineQuantity, precision = 2 };
+				item.quantityReceived = new Quantity() { value = 0, precision = 2 }; // no value in sage
+				item.billedQuantity = new Quantity() { value = line.LineQuantity, precision = 2 };
+				item.cost = new Cost() { amount = line.UnitBuyingPrice, precision = 2 };
+				item.amountDue = new Amount() { amount = line.LineTotalValue };
+				item.lineNumber = linenumber; // no value in sage
+				item.closed = false; // no value in sage
+				item.description = line.ItemDescription;
+				item.poItemStatus = "New";
+
+				items.Add(item);
+				linenumber++;
+			}
+			purchaseorder.items = items;
 
 
 			purchaseorderroot.purchaseOrder = purchaseorder;
@@ -273,5 +312,74 @@ namespace SyncLib
 		}
 
 		#endregion
+
+		#region INVOICE/BILL
+
+		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice)
+		{
+			BillRoot billroot = new BillRoot();
+			Bill bill = new Bill();
+
+			bill.id = "";
+			bill.externalId = "";// invoice.InstrumentNo;
+			// term, classification, etc
+			
+			bill.dueDate = invoice.DueDate.ToString("yyyy-MM-dd");
+			bill.transactionDate = invoice.InstrumentDate.ToString("yyyy-MM-dd"); //??
+			bill.invoiceNumber = invoice.InstrumentNo;
+			bill.amount = new Amount() { amount = invoice.CoreDocumentNetValue };	// ???
+			bill.balance = new Amount() { amount = 2 }; // ???
+			bill.totalTaxAmount = new Amount() { amount = invoice.CoreDocumentTaxValue }; // ??
+			if (invoice.MemoNotes.Count > 0)
+				bill.memo = invoice.MemoNotes[0].Note; // JUST USE THE FIRST MEMO
+			else
+				bill.memo = "";
+			bill.poNumber = ""; // ??
+			bill.state = "Open"; // ??
+
+			// GET THE VENDOR ID FROM MINERAL TREE
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(invoice.Supplier.SourceReference);
+			if (vendor == null) { return null; }
+			bill.vendor = new ObjID() { id = vendor.id };
+
+			bill.expenses = null;
+			bill.items = null;
+
+			billroot.bill = bill;
+			return billroot;
+		}
+
+		#endregion
+
+		#region CREDIT NOTES
+
+		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote)
+		{
+			CreditRoot creditroot = new CreditRoot();
+			Credit credit = new Credit();
+
+			credit.id = "";
+			credit.creditNumber = creditnote.InstrumentNo;
+			credit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd"); ;
+
+			// GET THE VENDOR ID FROM MINERAL TREE
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(creditnote.Supplier.SourceReference);
+			if (vendor == null) { return null; }
+			credit.vendor = new ObjID() { id = vendor.id };
+
+			credit.amount = new Amount() { amount = creditnote.CoreDocumentGrossValue }; // ???
+			credit.externalId = creditnote.InstrumentNo;
+			credit.status = "Open";
+			if (creditnote.MemoNotes.Count > 0)
+				credit.memo = creditnote.MemoNotes[0].Note; // JUST USE THE FIRST MEMO
+			else
+				credit.memo = "";
+
+			creditroot.credit = credit;
+			return creditroot;
+		}
+
+		#endregion
+
 	}
 }

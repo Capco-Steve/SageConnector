@@ -46,14 +46,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MTApi.cs" />
+    <Compile Include="MTEventArgs.cs" />
     <Compile Include="MTSettings.cs" />
     <Compile Include="Objects\AccountBalance.cs" />
     <Compile Include="Objects\Address.cs" />
     <Compile Include="Objects\Amount.cs" />
     <Compile Include="Objects\AvailableBalance.cs" />
     <Compile Include="Objects\BankAccount.cs" />
+    <Compile Include="Objects\Bill.cs" />
+    <Compile Include="Objects\BillRoot.cs" />
     <Compile Include="Objects\Company.cs" />
     <Compile Include="Objects\Cost.cs" />
+    <Compile Include="Objects\Credit.cs" />
+    <Compile Include="Objects\CreditRoot.cs" />
     <Compile Include="Objects\Department.cs" />
     <Compile Include="Objects\DepartmentRoot.cs" />
     <Compile Include="Objects\Expenses.cs" />
