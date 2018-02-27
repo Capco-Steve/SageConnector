@@ -78,7 +78,7 @@ namespace SyncLib
 			else
 				vendor.memo = "";
 
-			vendor.customerAccount = "";
+			vendor.customerAccount = supplier.SupplierBanks.PrimaryBank.BankAccountReference;
 			//vendor.primarySubsidiary = null;// new PrimarySubsidiary() {id = "1234" };
 			vendor.taxId = "";
 			vendor.vatNumber = supplier.TaxRegistrationCode;

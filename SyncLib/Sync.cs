@@ -111,8 +111,8 @@ namespace SyncLib
 			//SagePaymentTermsToMineralTreeTerms(found.id, sessiontoken); // no update
 
 			//SageLivePurchaseOrdersToMineralTreePurchaseOrders(found.id, sessiontoken);
-			//SageInvoicesToMineralTreeBills(found.id, sessiontoken);
-			NewMineralTreeBillsToSageInvoices(found.id, sessiontoken);
+			SageOpenInvoicesToMineralTreeBills(found.id, sessiontoken);
+			//NewMineralTreeBillsToSageInvoices(found.id, sessiontoken);
 			//SageCreditNotesToMineralTreeCredit(found.id, sessiontoken); // no update
 			
 			// TODO, PAYMENTS, INVOICES
@@ -487,15 +487,16 @@ namespace SyncLib
 
 		#region INVOICES/BILLS
 
-		public static bool SageInvoicesToMineralTreeBills(string companyid, string sessiontoken)
+		public static bool SageOpenInvoicesToMineralTreeBills(string companyid, string sessiontoken)
 		{
-			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> invoices = SageApi.GetPurchaseInvoices();
+			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> invoices = SageApi.GetOpenPurchaseInvoices();
 
-			//foreach (Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice in invoices)
-			//{
-				BillRoot billroot = Mapper.SageInvoiceToMTBill(invoices[3]);
+			foreach (Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice in invoices)
+			{
+				//if(invoice.
+				BillRoot billroot = Mapper.SageInvoiceToMTBill(invoice);
 				MTApi.CreateBill(companyid, billroot, sessiontoken);
-			//}
+			}
 
 			return true;
 		}

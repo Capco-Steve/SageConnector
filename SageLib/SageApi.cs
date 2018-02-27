@@ -211,7 +211,7 @@ namespace SageLib
 
 		#region INVOICES
 
-		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetPurchaseInvoices()
+		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetOpenPurchaseInvoices()
 		{
 			// instrumentno == externalid
 			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
@@ -224,7 +224,8 @@ namespace SageLib
 				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
 				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
-				query.Filters.Add(filter);
+				//query.Filters.Add(filter);
+				//Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.f, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
 
 				invoices.Find(query);
 
@@ -290,7 +291,7 @@ namespace SageLib
 
 			#endregion
 
-			#region CREDIT NOTES
+		#region CREDIT NOTES
 
 		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetCreditNotes()
 		{
