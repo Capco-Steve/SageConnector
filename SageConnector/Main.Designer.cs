@@ -33,6 +33,7 @@
 			this.txtResults = new System.Windows.Forms.TextBox();
 			this.btnSearch = new System.Windows.Forms.Button();
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+			this.btnLoadHistoricalInvoices = new System.Windows.Forms.Button();
 			this.tableLayoutPanel1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -52,7 +53,7 @@
 			this.txtResults.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.tableLayoutPanel1.SetColumnSpan(this.txtResults, 2);
+			this.tableLayoutPanel1.SetColumnSpan(this.txtResults, 3);
 			this.txtResults.Location = new System.Drawing.Point(3, 3);
 			this.txtResults.Multiline = true;
 			this.txtResults.Name = "txtResults";
@@ -63,7 +64,7 @@
 			// btnSearch
 			// 
 			this.btnSearch.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.btnSearch.Location = new System.Drawing.Point(395, 298);
+			this.btnSearch.Location = new System.Drawing.Point(413, 298);
 			this.btnSearch.Name = "btnSearch";
 			this.btnSearch.Size = new System.Drawing.Size(75, 23);
 			this.btnSearch.TabIndex = 2;
@@ -73,12 +74,14 @@
 			// 
 			// tableLayoutPanel1
 			// 
-			this.tableLayoutPanel1.ColumnCount = 2;
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 80.78603F));
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 19.21397F));
-			this.tableLayoutPanel1.Controls.Add(this.btnRun, 1, 1);
+			this.tableLayoutPanel1.ColumnCount = 3;
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 53.85736F));
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30.20478F));
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16.04096F));
 			this.tableLayoutPanel1.Controls.Add(this.txtResults, 0, 0);
-			this.tableLayoutPanel1.Controls.Add(this.btnSearch, 0, 1);
+			this.tableLayoutPanel1.Controls.Add(this.btnRun, 2, 1);
+			this.tableLayoutPanel1.Controls.Add(this.btnSearch, 1, 1);
+			this.tableLayoutPanel1.Controls.Add(this.btnLoadHistoricalInvoices, 0, 1);
 			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -87,6 +90,16 @@
 			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
 			this.tableLayoutPanel1.Size = new System.Drawing.Size(586, 325);
 			this.tableLayoutPanel1.TabIndex = 3;
+			// 
+			// btnLoadHistoricalInvoices
+			// 
+			this.btnLoadHistoricalInvoices.Location = new System.Drawing.Point(3, 298);
+			this.btnLoadHistoricalInvoices.Name = "btnLoadHistoricalInvoices";
+			this.btnLoadHistoricalInvoices.Size = new System.Drawing.Size(156, 23);
+			this.btnLoadHistoricalInvoices.TabIndex = 3;
+			this.btnLoadHistoricalInvoices.Text = "Load Historical Invoices";
+			this.btnLoadHistoricalInvoices.UseVisualStyleBackColor = true;
+			this.btnLoadHistoricalInvoices.Click += new System.EventHandler(this.btnLoadHistoricalInvoices_Click);
 			// 
 			// Main
 			// 
@@ -109,6 +122,7 @@
 		private System.Windows.Forms.TextBox txtResults;
 		private System.Windows.Forms.Button btnSearch;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+		private System.Windows.Forms.Button btnLoadHistoricalInvoices;
 	}
 }
 

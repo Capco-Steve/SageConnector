@@ -10,24 +10,22 @@ namespace SyncLib
 {
 	public class MTReferenceData
 	{
-		// MINERAL TREE REFERENCE DATA - USED WHEN SYNCING TO LOOKUP IDS. SAVES MAKING LOTS OF WEB API CALLS 
-		// AT THE EXPENSE OF MEMORY USE!
-		// TODO - THIS WILL HAVE TO BE UPDATED AS WE CREATE NEW OBJECTS IN MINERAL TREE
-		private static List<Vendor> Vendors = null;
-		private static List<Department> Departments = null;
-		private static List<Item> Items = null;
-		private static List<GlAccount> GlAccounts = null;
-		private static List<Location> Locations = null;
+		// MINERAL TREE REFERENCE DATA - USED WHEN SYNCING TO LOOKUP IDS. SAVES MAKING LOTS OF WEB API CALLS AT THE EXPENSE OF MEMORY USE!
+		private static List<Vendor> Vendors = new List<Vendor>();
+		private static List<Department> Departments = new List<Department>();
+		private static List<Item> Items = new List<Item>();
+		private static List<GlAccount> GlAccounts = new List<GlAccount>();
+		private static List<Location> Locations = new List<Location>();
+		private static List<PaymentMethod> PaymentMethods = new List<PaymentMethod>();
 
-		public static bool LoadReferenceData(string companyid, string sessiontoken)
+		public static void LoadReferenceData(string companyid, string sessiontoken)
 		{
 			Vendors = MTApi.GetVendorsByCompanyID(companyid, sessiontoken);
 			Departments = MTApi.GetDepartmentsByCompanyID(companyid, sessiontoken);
 			Items = MTApi.GetItemsByCompanyID(companyid, sessiontoken);
 			GlAccounts = MTApi.GetGlAccountsByCompanyID(companyid, sessiontoken);
 			Locations = MTApi.GetLocationsByCompanyID(companyid, sessiontoken);
-
-			return true;
+			PaymentMethods = MTApi.GetPaymentMethodsByCompanyName(SyncSettings.MTCompanyNameToSync, sessiontoken);
 		}
 
 		#region VENDORS
@@ -99,6 +97,11 @@ namespace SyncLib
 			return GlAccounts.Find(glaccount => glaccount.externalId == externalid);
 		}
 
+		public static GlAccount FindGlAccountByAccountNumber(string accountnumber)
+		{
+			return GlAccounts.Find(glaccount => glaccount.accountNumber == accountnumber);
+		}
+
 		public static void AddGlAccount(GlAccount glaccount)
 		{
 			GlAccounts.Add(glaccount);
@@ -126,6 +129,25 @@ namespace SyncLib
 		public static int GetLocationCount()
 		{
 			return Locations.Count();
+		}
+
+		#endregion
+
+		#region PAYMENT METHODS
+
+		public static PaymentMethod FindPaymentMethodByExternalID(string externalid)
+		{
+			return PaymentMethods.Find(paymentmethod => paymentmethod.externalId == externalid);
+		}
+
+		public static void AddPaymentMethod(PaymentMethod paymentmethod)
+		{
+			PaymentMethods.Add(paymentmethod);
+		}
+
+		public static int GetPaymentMethodCount()
+		{
+			return PaymentMethods.Count();
 		}
 
 		#endregion

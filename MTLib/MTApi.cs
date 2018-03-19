@@ -17,6 +17,7 @@ namespace MTLib
     public static class MTApi
     {
 		public static event EventHandler<MTEventArgs> OnError;
+		private static JsonSerializerSettings Settings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
 
 		#region AUTHENTICATION
 
@@ -331,6 +332,42 @@ namespace MTLib
 
 		#region ITEM
 
+		public static Item GetItemByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Item item = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "ITEM";
+				query.query = string.Format("dimension_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if(results.Count() == 1)
+					{
+						item = results[0].ToObject<Item>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+			}
+
+			return item;
+		}
+
 		public static List<Item> GetItemsByCompanyID(string companyid, string sessiontoken)
 		{
 			List<Item> items = new List<Item>();
@@ -424,7 +461,7 @@ namespace MTLib
 
 				SearchQuery query = new SearchQuery();
 				query.view = "GLACCOUNT";
-				query.query = string.Format("dimension_name=={0}", "*");
+				query.query = string.Format("gl_account_name=={0}", "*");
 				query.page = 0;
 				query.count = 10000;
 				query.sortField = "modified";
@@ -631,6 +668,45 @@ namespace MTLib
 			return newpaymentmethod;
 		}
 
+		public static PaymentMethod UpdatePaymentMethod(PaymentMethodRoot paymentmethodroot, string sessiontoken)
+		{
+			PaymentMethod updatedpaymentmethod = null;
+			try
+			{
+				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.PaymentMethodUrl);
+				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(paymentmethodroot));
+
+				if (json.Length > 0)
+				{
+					updatedpaymentmethod = JsonConvert.DeserializeObject<PaymentMethod>(json);
+				}
+			}
+			catch (Exception ex)
+			{
+				updatedpaymentmethod = null;
+				Logger.WriteLog(ex);
+			}
+
+			return updatedpaymentmethod;
+		}
+
+		public static List<PaymentMethod> GetPaymentMethodsByCompanyName(string companyname, string sessiontoken)
+		{
+			// PAYMENT METHOD ISN'T SUPPORTED BY SEARCH SO WE HAVE TO QUERY THE COMPANY OBJECT AND GET THE PAYMENT METHODS FROM THAT 
+
+			List<PaymentMethod> paymentmethods = new List<PaymentMethod>();
+			List<Company> companies = MTApi.GetCompaniesForCurrentUser(sessiontoken);
+
+			Company company = companies.Find(c => c.name == companyname);
+
+			if(company != null && company.paymentMethods != null)
+			{
+				paymentmethods = company.paymentMethods;
+			}
+
+			return paymentmethods;
+		}
+
 		#endregion
 
 		#region PURCHASE ORDERS
@@ -736,7 +812,8 @@ namespace MTLib
 				{
 					JObject obj = JObject.Parse(json);
 					IList<JToken> results = obj["entities"].Children().ToList();
-					order = results[0].ToObject<PurchaseOrder>();
+					if(results.Count() == 1)
+						order = results[0].ToObject<PurchaseOrder>();
 				}
 			}
 			catch (Exception ex)
@@ -797,7 +874,79 @@ namespace MTLib
 				query.view = "BILL";
 				query.query = string.Format("bill_externalId=={0}", "''");
 				query.page = 0;
+				query.count = 10000;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+					foreach (JToken token in results)
+					{
+						bills.Add(token.ToObject<Bill>());
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+			}
+
+			return bills;
+		}
+
+		public static Bill GetBillByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Bill bill = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "BILL";
+				query.query = string.Format("bill_externalId=={0}", externalid);
+				query.page = 0;
 				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if(results.Count() == 1)
+					{
+						bill = results[0].ToObject<Bill>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+			}
+
+			return bill;
+		}
+
+		public static List<Bill> GetSettledBills(string companyid, string sessiontoken)
+		{
+			List<Bill> bills = new List<Bill>();
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "BILL";
+				query.query = string.Format("bill_approvalStatus=={0}", "1"); // 0 = Any
+				//query.query = string.Format("billOrCredit_vendorName=={0}", "*"); // 0 = Any
+				query.page = 0;
+				query.count = 10000;
 				query.sortField = "modified";
 				query.sortAsc = true;
 
@@ -827,7 +976,7 @@ namespace MTLib
 			try
 			{
 				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.BillUrl);
-				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(billroot));
+				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(billroot, Settings));
 
 				if (json.Length > 0)
 				{
@@ -863,6 +1012,72 @@ namespace MTLib
 			}
 
 			return newbill;
+		}
+
+		#endregion
+
+		#region PAYMENTS
+
+		public static List<Payment> GetPayments(string companyid, string sessiontoken)
+		{
+			List<Payment> payments = new List<Payment>();
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "PAYMENT";
+				query.query = string.Format("payment_externalId=={0}", "''");
+				//query.query = string.Format("payment_status=in=({0})", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14"); // ; payment_status==0
+				query.page = 0;
+				query.count = 10000;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					JsonSerializer js = new JsonSerializer();
+					js.NullValueHandling = NullValueHandling.Ignore;
+
+					foreach (JToken token in results)
+					{
+						payments.Add(token.ToObject<Payment>(js));
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+			}
+
+			return payments;
+		}
+
+		public static Payment UpdatePayment(PaymentRoot paymentroot, string sessiontoken)
+		{
+			Payment updatedpayment = null;
+			try
+			{
+				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.PaymentUrl);
+				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(paymentroot, Settings));
+
+				if (json.Length > 0)
+				{
+					updatedpayment = JsonConvert.DeserializeObject<Payment>(json);
+				}
+			}
+			catch (Exception ex)
+			{
+				updatedpayment = null;
+				Logger.WriteLog(ex);
+			}
+
+			return updatedpayment;
 		}
 
 		#endregion
@@ -907,7 +1122,7 @@ namespace MTLib
 			Credit updatedcredit = null;
 			try
 			{
-				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.PurchaseOrderUrl);
+				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.CreditUrl);
 				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(creditroot));
 
 				if (json.Length > 0)

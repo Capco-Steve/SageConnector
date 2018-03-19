@@ -14,6 +14,7 @@ namespace MTLib.Objects
 		//public ObjID location { get; set; }
 		//public ObjID glAccount { get; set; }
 		public string name { get; set; }
+		public string externalID { get; set; }
 		public Quantity quantity { get; set; }
 		public Quantity quantityReceived { get; set; }
 		public Quantity billedQuantity { get; set; }

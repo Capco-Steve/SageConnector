@@ -97,6 +97,11 @@ namespace MTLib
 			get { return ConfigurationManager.AppSettings["BillUrl"]; }
 		}
 
+		public static string PaymentUrl
+		{
+			get { return ConfigurationManager.AppSettings["PaymentUrl"]; }
+		}
+
 		public static string CreditUrl
 		{
 			get { return ConfigurationManager.AppSettings["CreditUrl"]; }

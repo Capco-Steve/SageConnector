@@ -24,7 +24,7 @@ namespace MTLib.Objects
 		public Address address { get; set; }
 		public List<Phone> phones { get; set; }
 		public object subsidiaries { get; set; }
-		public List<object> paymentMethods { get; set; }
+		public List<PaymentMethod> paymentMethods { get; set; }
 
 	}
 }

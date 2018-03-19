@@ -49,6 +49,7 @@
     <Compile Include="MTEventArgs.cs" />
     <Compile Include="MTSettings.cs" />
     <Compile Include="Objects\AccountBalance.cs" />
+    <Compile Include="Objects\AccountingPeriod.cs" />
     <Compile Include="Objects\Address.cs" />
     <Compile Include="Objects\Amount.cs" />
     <Compile Include="Objects\AvailableBalance.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="Objects\DepartmentRoot.cs" />
     <Compile Include="Objects\Expenses.cs" />
     <Compile Include="Objects\FundingMethod.cs" />
+    <Compile Include="Objects\FundMethod.cs" />
     <Compile Include="Objects\GlAccount.cs" />
     <Compile Include="Objects\GlAccountRoot.cs" />
     <Compile Include="Objects\Item.cs" />
@@ -70,8 +72,10 @@
     <Compile Include="Objects\Location.cs" />
     <Compile Include="Objects\LocationRoot.cs" />
     <Compile Include="Objects\ObjID.cs" />
+    <Compile Include="Objects\Payment.cs" />
     <Compile Include="Objects\PaymentMethod.cs" />
     <Compile Include="Objects\PaymentMethodRoot.cs" />
+    <Compile Include="Objects\PaymentRoot.cs" />
     <Compile Include="Objects\Phone.cs" />
     <Compile Include="Objects\PrimarySubsidiary.cs" />
     <Compile Include="Objects\PurchaseOrder.cs" />
@@ -84,6 +88,7 @@
     <Compile Include="Objects\Subsidiary.cs" />
     <Compile Include="Objects\Term.cs" />
     <Compile Include="Objects\TermRoot.cs" />
+    <Compile Include="Objects\Update.cs" />
     <Compile Include="Objects\User.cs" />
     <Compile Include="Objects\UserRoot.cs" />
     <Compile Include="Objects\Vendor.cs" />

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncLib", "SyncLib\SyncLib.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{7AFFF2A7-0B99-4744-BFA8-F7176235CD82}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "SageConnectorSetup", "SageConnectorSetup\SageConnectorSetup.vdproj", "{F5886E5A-A3BC-4629-834E-D1428B2615E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,8 @@ Global
 		{7AFFF2A7-0B99-4744-BFA8-F7176235CD82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AFFF2A7-0B99-4744-BFA8-F7176235CD82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AFFF2A7-0B99-4744-BFA8-F7176235CD82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5886E5A-A3BC-4629-834E-D1428B2615E4}.Debug|Any CPU.ActiveCfg = Debug
+		{F5886E5A-A3BC-4629-834E-D1428B2615E4}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

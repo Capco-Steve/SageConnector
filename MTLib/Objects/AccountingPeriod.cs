@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace MTLib.Objects
 {
-	public class Cost
+	public class AccountingPeriod
 	{
-		public long amount { get; set; } = 0; // MT DOESN'T SUPPORT DECIMALS!!
-		public int precision { get; set; } = 2;
+		public string id { get; set; }
 	}
-
 }

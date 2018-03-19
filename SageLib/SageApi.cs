@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
+using Sage.Common.Data;
 using Supplier = Sage.Accounting.PurchaseLedger.Supplier;
 using Bank = Sage.Accounting.CashBook.Bank;
 using Department = Sage.Accounting.SystemManager.Department;
@@ -21,17 +22,22 @@ namespace SageLib
 
 		#region CONNECT
 
-		public static bool Connect()
+		public static bool Connect(string companyname)
         {
             bool result = true;
             try
             {
-                if (application == null)
-                {
-                    application = new Application();
-                    application.Connect();
-                    application.ActiveCompany = application.Companies[0]; // JUST USE THE FIRST COMPANY - THIS WILL HAVE TO CHANGE IF THERE ARE MULTIPLE COMPANIES
-                }
+                application = new Application();
+                application.Connect();
+				foreach(Sage.Accounting.Company company in application.Companies)
+				{
+					if(company.Name == companyname)
+					{
+						application.ActiveCompany = company;
+					}
+				}
+
+				result = application.ActiveCompany == null ? false : true;
             }
             catch(Exception ex)
             {
@@ -56,6 +62,18 @@ namespace SageLib
 			return list;
         }
 
+		public static Supplier GetSupplierByPrimaryKey(string key)
+		{
+			Supplier supplier = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				supplier = Sage.Accounting.PurchaseLedger.SupplierFactory.Factory.Fetch(dbkey);
+				
+			}
+			return supplier;
+		}
+
 		#endregion
 
 		#region BANKS
@@ -69,6 +87,18 @@ namespace SageLib
 				list = banks.GetList().Cast<Bank>().ToList();
 			}
 			return list;
+		}
+
+		public static Bank GetBankByPrimaryKey(string key)
+		{
+			Bank bank = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				bank = Sage.Accounting.CashBook.BankFactory.Factory.Fetch(dbkey);
+
+			}
+			return bank;
 		}
 
 		#endregion
@@ -99,6 +129,18 @@ namespace SageLib
 				list = stockitems.GetList().Cast<StockItem>().ToList();
 			}
 			return list;
+		}
+
+		public static StockItem GetStockItemByCode(string code)
+		{
+			if (application != null)
+			{
+				Sage.Accounting.Stock.StockItems stockitems = new Sage.Accounting.Stock.StockItems();
+				List<StockItem> list = stockitems.GetList().Cast<StockItem>().ToList();
+
+				return list.Find(stock => stock.Code == code);
+			}
+			return null;
 		}
 
 		#endregion
@@ -187,21 +229,13 @@ namespace SageLib
 			return list;
 		}
 
-		public static POPOrder GetPurchaseOrderByDocumentNo(string documentno)
+		public static POPOrder GetPurchaseOrderByPrimaryKey(string key)
 		{
 			POPOrder poporder = null;
 			if (application != null)
 			{
-				Sage.Accounting.POP.POPOrders poporders = new Sage.Accounting.POP.POPOrders();
-				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
-				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.POP.POPOrder.FIELD_DOCUMENTNO, documentno);
-				query.Filters.Add(filter);
-
-				poporders.Find(query);
-				if(poporders.Count == 1) // SHOULD BE JUST ONE - DOCUMENTNO IS UNIQUE
-				{
-					poporder = poporders.First;
-				}
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				poporder = Sage.Accounting.POP.POPOrder.Fetch(key);
 			}
 
 			return poporder;
@@ -211,21 +245,18 @@ namespace SageLib
 
 		#region INVOICES
 
-		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetOpenPurchaseInvoices()
+		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetHistoricalInvoices(DateTime from)
 		{
-			// instrumentno == externalid
 			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
 			if (application != null)
 			{
-				// SALES INVOICES - NOT NEEDED
-				//Sage.Accounting.SalesLedger.PostedSalesAccountEntries entries = Sage.Accounting.SalesLedger.PostedSalesAccountEntriesFactory.Factory.CreateNew();
-				
-				// PURCHASE INVOICES - ONLY PURCHASE INVOICES REQUIRED
+				// PURCHASE INVOICES
 				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
 				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
-				//query.Filters.Add(filter);
-				//Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.f, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
+				query.Filters.Add(filter);
+				Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTDATE, FilterOperator.GreaterThanOrEqual, from);
+				query.Filters.Add(filter1);
 
 				invoices.Find(query);
 
@@ -235,71 +266,141 @@ namespace SageLib
 			return list;
 		}
 
-		public static void CreateInvoice(string supplierreference, string invoicenumber, string invoicedate, decimal amount, decimal taxamount)
+		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetNewInvoices(DateTime from)
 		{
-			Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrument invoice = Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrumentFactory.Factory.CreateNew();
+			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> results = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
+			if (application != null)
+			{
+				// PURCHASE INVOICES
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 
-			invoice.SuppressExceedsCreditLimitException = true;
-			invoice.Supplier = Sage.Accounting.PurchaseLedger.SupplierFactory.Factory.Fetch(supplierreference);
-			invoice.InstrumentNo = invoicenumber;
-			invoice.InstrumentDate = DateTime.ParseExact(invoicedate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
+				query.Filters.Add(filter);
 
-			invoice.NetValue = amount;
-			invoice.TaxValue = taxamount;
+				Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTDATE, FilterOperator.GreaterThanOrEqual, from);
+				query.Filters.Add(filter1);
 
-			invoice.Authorised = Sage.Accounting.AuthorisationTypeEnum.AuthorisationTypeNotRequired;
+				invoices.Find(query);
 
+				List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = invoices.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList();
+				foreach(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry in list)
+				{
+					if(entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusBlank)
+					{
+						results.Add(entry);
+					}
+				}
+			}
 
-			invoice.Validate();
-			invoice.Update(); // NO WAY TO TELL IF THIS SUCCEEDS!
+			return results;
 		}
 
-		private static void CreatePayment(string supplierreference, string paymentdate)
+		public static Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry GetPurchaseInvoiceByPrimaryKey(string id)
 		{
-			if (Sage.Accounting.CashBook.CashBookModuleFactory.Factory.Fetch().Enabled)
+			Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry = null;
+			if (application != null)
 			{
-				Sage.Accounting.PurchaseLedger.PurchaseBankReceiptInstrument payment = Sage.Accounting.PurchaseLedger.PurchaseBankReceiptInstrumentFactory.Factory.CreateNew();
-				payment.SuppressExceedsCreditLimitException = true;
-
-				// SET THE BANK
-				Sage.Accounting.CashBook.Banks banks = Sage.Accounting.CashBook.BanksFactory.Factory.CreateNew();
-				banks.Query.Filters.Add(new Sage.ObjectStore.Filter(Sage.Accounting.CashBook.Bank.FIELD_NAME, "Petty Cash (Office)"));
-				banks.Find();
-
-				// Set the bank account on the instrument to the petty cash bank account
-				payment.Bank = banks.First;
-
-				// SET THE SUPPLIER
-				payment.Supplier = Sage.Accounting.PurchaseLedger.SupplierFactory.Factory.Fetch(supplierreference);
-
-				// Set the receipt date
-				payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
-
-				// Set the transaction references - Note: a maximum of 10 characters
-				//payment.InstrumentNo = "12345";
-				//payment.SecondReferenceNo = "REC1234";
-
-				payment.Validate();
-
-				payment.Update();
+				Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry e = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntryFactory.Factory.Fetch(key);
 			}
-			else
-			{
 
-			}
+			return entry;
 		}
 
-			#endregion
+		public static string CreateInvoice(string supplierid, string invoicenumber, string invoicedate, decimal amount, decimal taxamount)
+		{
+			string newid = "";
+			try
+			{
+				Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrument invoice = Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrumentFactory.Factory.CreateNew();
+
+				invoice.SuppressExceedsCreditLimitException = true;
+				invoice.Supplier = SageApi.GetSupplierByPrimaryKey(supplierid);
+				invoice.InstrumentNo = invoicenumber;
+
+				invoice.InstrumentDate = DateTime.ParseExact(invoicedate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
+
+				invoice.NetValue = amount;
+				invoice.TaxValue = taxamount;
+
+				invoice.Authorised = Sage.Accounting.AuthorisationTypeEnum.AuthorisationTypeNotRequired;
+
+				invoice.Validate();
+				invoice.Update(); // NO WAY TO TELL IF THIS SUCCEEDS!
+				newid = invoice.ActualPostedAccountEntry.PrimaryKey.DbValue.ToString();
+
+			}
+			catch(Exception ex)
+			{
+				newid = "";
+			}
+
+			return newid;
+		}
+
+		#endregion
+
+		#region PAYMENTS
+
+		public static string CreatePayment(string supplierid, string bankid, string invoiceid, string paymentdate, decimal amount, decimal taxamount)
+		{
+			string newid = "";
+			try
+			{
+				if (Sage.Accounting.CashBook.CashBookModuleFactory.Factory.Fetch().Enabled)
+				{
+					Sage.Accounting.PurchaseLedger.PurchaseBankPaymentInstrument payment = Sage.Accounting.PurchaseLedger.PurchaseBankPaymentInstrumentFactory.Factory.CreateNew();
+					payment.SuppressExceedsCreditLimitException = true;
+
+					// SET THE BANK
+					payment.Bank = SageApi.GetBankByPrimaryKey(bankid);
+
+					// SET THE SUPPLIER
+					payment.Supplier = SageApi.GetSupplierByPrimaryKey(supplierid);
+
+					// SET THE RECEIPT DATE
+					payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
+
+					// SET THE TRANSACTION REFERENCES
+					Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetPurchaseInvoiceByPrimaryKey(invoiceid);
+					if(invoice != null)
+					{
+						payment.InstrumentNo = invoice.InstrumentNo; // ??
+					}
+					payment.SecondReferenceNo = ""; // ??
+
+					// SET THE AMOUNTS
+					payment.NetValue = amount;
+					payment.TaxValue = taxamount;
+
+					payment.Validate();
+
+					payment.Update(); // NO WAY TO KNOW IF THIS SUCCEEDS OR NOT!
+					newid = payment.ActualPostedAccountEntry.PrimaryKey.DbValue.ToString();
+				}
+				else
+				{
+					return "";
+				}
+			}
+			catch(Exception ex)
+			{
+				newid = "";
+			}
+
+			return newid;
+		}
+
+		#endregion
 
 		#region CREDIT NOTES
 
 		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetCreditNotes()
 		{
-			// instrumentno == externalid
 			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
 			if (application != null)
 			{
-
 				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries creditnotes = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
 				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeCreditNote);

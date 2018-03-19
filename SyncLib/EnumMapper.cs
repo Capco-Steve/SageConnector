@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Sage.ObjectStore;
-using SageState = Sage.Accounting.OrderProcessing.DocumentStatusEnum;
+using SageInvoiceState = Sage.Accounting.AllocationStatusEnum;
 
 namespace SyncLib
 {
@@ -13,18 +13,14 @@ namespace SyncLib
 	/// </summary>
 	public class EnumMapper
 	{
-		public static string SageDocumentStatusEnumToMTState(SageState sagestate)
+		public static string SageDocumentStatusEnumToMTState(SageInvoiceState sageinvoicestate)
 		{
 			string state = "";
-			switch(sagestate)
+			switch(sageinvoicestate)
 			{
-				case SageState.EnumDocumentStatusCancelled: state = "Cancelled"; break;
-				case SageState.EnumDocumentStatusComplete: state = "Closed"; break;
-				case SageState.EnumDocumentStatusDispute: state = "Closed"; break; //??
-				case SageState.EnumDocumentStatusDraft: state = "Closed"; break;
-				case SageState.EnumDocumentStatusLive: state = "Released"; break;
-				case SageState.EnumDocumentStatusOnHold: state = "Closed"; break;
-				case SageState.EnumDocumentStatusPrinted: state = "Closed"; break;
+				case SageInvoiceState.DocumentStatusBlank: state = "Open"; break;
+				case SageInvoiceState.DocumentStatusPart: state = "Open"; break;
+				case SageInvoiceState.DocumentStatusFull: state = "Settled"; break; //??
 
 				default: state = "Unknown"; break;
 			}

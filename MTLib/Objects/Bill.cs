@@ -8,25 +8,26 @@ namespace MTLib.Objects
 {
 	public class Bill
 	{
-		public string id { get; set; }
-		public string externalId { get; set; }
-		public Term term { get; set; }
-		public ObjID classification { get; set; }
-		public Department department { get; set; }
-		public Location location { get; set; }
-		public Subsidiary subsidiary { get; set; }
-		public string dueDate { get; set; }
-		public string transactionDate { get; set; }
-		public string invoiceNumber { get; set; }
-		public Amount amount { get; set; }
-		public Amount balance { get; set; }
-		public Amount totalTaxAmount { get; set; }
-		public string memo { get; set; }
-		public string poNumber { get; set; }
-		public string state { get; set; }
-		public ObjID vendor { get; set; }
-		public List<Expenses> expenses { get; set; }
-		public List<Item> items { get; set; }
+		public string id { get; set; } = "";
+		public string externalId { get; set; } = "";
+		public Term term { get; set; } = null;
+		public ObjID classification { get; set; } = null;
+		public Department department { get; set; } = null;
+		public Location location { get; set; } = null;
+		public Subsidiary subsidiary { get; set; } = null;
+		public string dueDate { get; set; } = null;
+		public string transactionDate { get; set; } = null;
+		public string invoiceNumber { get; set; } = null;
+		public Amount amount { get; set; } = null;
+		public Amount balance { get; set; } = null;
+		public Amount totalTaxAmount { get; set; } = null;
+		public string memo { get; set; } = null;
+		public string poNumber { get; set; } = null;
+		public string state { get; set; } = null;
+		public string status { get; set; } = null;
+		public ObjID vendor { get; set; } = null;
+		public List<Expenses> expenses { get; set; } = null;
+		public List<Item> items { get; set; } = null;
 	}
 
 }

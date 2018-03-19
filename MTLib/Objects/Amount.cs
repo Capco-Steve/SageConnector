@@ -8,6 +8,7 @@ namespace MTLib.Objects
 {
 	public class Amount
 	{
-		public decimal amount { get; set; } = 0;
+		public long amount { get; set; } = 0;
+		public int precision { get; set; } = 2;
 	}
 }

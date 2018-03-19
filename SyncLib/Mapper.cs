@@ -15,6 +15,7 @@ using SageCostCentre = Sage.Accounting.SystemManager.CostCentre;
 using Bank = Sage.Accounting.CashBook.Bank;
 using POPOrder = Sage.Accounting.POP.POPOrder;
 using PostedPurchaseAccountEntry = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry;
+using Utils;
 
 namespace SyncLib
 {
@@ -25,14 +26,15 @@ namespace SyncLib
 	{
 		#region VENDOR
 
-		public static VendorRoot SageSupplierToMTVendor(SageSupplier supplier)
+		public static VendorRoot SageSupplierToMTVendor(SageSupplier supplier, string prefix)
 		{
 			VendorRoot vendorroot = new VendorRoot();
 			Vendor vendor = new Vendor();
 
+
 			vendor.id = "";
+			vendor.externalId = ExternalIDFormatter.AppendPrefix(supplier.PrimaryKey.DbValue.ToString(), prefix);
 			vendor.form1099Enabled = false;
-			vendor.externalId = supplier.SourceReference;
 			vendor.name = supplier.Name;
 			vendor.active = true; // TODO - MIGHT CHANGE WHEN WE FIGURE OUT THE MATCHING FIELD
 
@@ -82,17 +84,21 @@ namespace SyncLib
 			//vendor.primarySubsidiary = null;// new PrimarySubsidiary() {id = "1234" };
 			vendor.taxId = "";
 			vendor.vatNumber = supplier.TaxRegistrationCode;
-			/*vendor.vendorCompanyDefault = null; new VendorCompanyDefault() {defaultClassId="1",
-																		defaultCustomerId="1",
-																		defaultDepartmentId="1",
-																		defaultEmployeeId="1",
-																		defaultItemId="1",
-																		defaultLocationId="1",
-																		defaultProjectId="1",
-																		defaultTermsId="1",
-																		defaultDebitAccountId="1",
-																		defaultApAccountId="1",
-																		defaultExpenseAccountId="1"};*/
+			
+			/*
+			VENDOR COMPANY DEFAULT IS NOT CURRENTLY SUPPORTED BUT MT - EVEN THOUGH ITS IN THE DOCUMENTATION!!!!
+
+			vendor.vendorCompanyDefault = new VendorCompanyDefault()
+			{
+				defaultExpenseAccountId = null
+			};
+
+			GlAccount glaccount = MTReferenceData.FindGlAccountByAccountNumber(supplier.DefaultNominalAccountNumber);
+			if (glaccount != null)
+			{
+				vendor.vendorCompanyDefault.defaultExpenseAccountId = glaccount.id;
+			}
+			*/
 
 			vendorroot.vendor = vendor;
 			return vendorroot;
@@ -102,14 +108,13 @@ namespace SyncLib
 
 		#region DEPARTMENT
 
-		public static DepartmentRoot SageDepartmentToMTDepartment(SageDepartment sagedepartment)
+		public static DepartmentRoot SageDepartmentToMTDepartment(SageDepartment sagedepartment, string prefix)
 		{
 			DepartmentRoot departmentroot = new DepartmentRoot();
 			Department department = new Department();
 
 			department.id = "";
-			//department.subsidiaries
-			department.externalId = sagedepartment.Code;
+			department.externalId = ExternalIDFormatter.AppendPrefix(sagedepartment.PrimaryKey.DbValue.ToString(), prefix);
 			department.name = sagedepartment.Name;
 			department.active = true;
 
@@ -121,17 +126,20 @@ namespace SyncLib
 
 		#region STOCKITEM / ITEM
 
-		public static ItemRoot SageStockItemToMTItem(SageStockItem sagestockitem)
+		public static ItemRoot SageStockItemToMTItem(SageStockItem sagestockitem, string prefix)
 		{
 			ItemRoot itemroot = new ItemRoot();
 			Item item = new Item();
 
 			item.id = "";
-			item.type = "INVENTORY"; //???
-
+			item.active = true;
+			item.externalId = ExternalIDFormatter.AppendPrefix(sagestockitem.PrimaryKey.DbValue.ToString(), prefix);
+			item.name = sagestockitem.Name;
+			item.type = "INVENTORY"; // ???
+ 
 			Cost cost = new Cost()
 			{
-				amount = sagestockitem.PriceBands[0].StockItemPrices[0].Price,
+				amount = PriceConverter.FromDecimal(sagestockitem.PriceBands[0].StockItemPrices[0].Price, 2),
 				precision = 2
 			};
 			item.cost = cost;
@@ -142,10 +150,6 @@ namespace SyncLib
 			};
 			item.residual = residual;
 
-			item.name = sagestockitem.Name;
-			item.active = true;
-			item.externalId = sagestockitem.Code;
-
 			itemroot.item = item;
 			return itemroot;
 		}
@@ -154,12 +158,13 @@ namespace SyncLib
 
 		#region NOMINAL CODE / GL CODE
 
-		public static GlAccountRoot SageNominalCodeToMTGlAccount(SageNominalCode sagenominalcode)
+		public static GlAccountRoot SageNominalCodeToMTGlAccount(SageNominalCode sagenominalcode, string prefix)
 		{
 			GlAccountRoot glaccountroot = new GlAccountRoot();
 			GlAccount glaccount = new GlAccount();
 
 			glaccount.id = "";
+			glaccount.externalId = ExternalIDFormatter.AppendPrefix(sagenominalcode.PrimaryKey.DbValue.ToString(), prefix);
 			glaccount.subsidiaries = null;
 			glaccount.departmentRequired = false;
 			glaccount.locationRequired = false;
@@ -169,9 +174,8 @@ namespace SyncLib
 			glaccount.employeeRequired = false;
 			glaccount.itemRequired = false;
 			glaccount.classRequired = false;
-			glaccount.ledgerType = "ACCOUNT"; // ????
+			glaccount.ledgerType = "EXPENSE_ACCOUNT";
 			glaccount.accountNumber = sagenominalcode.Reference;
-			glaccount.externalId = sagenominalcode.Reference;
 			glaccount.name = sagenominalcode.Name;
 			glaccount.active = true;
 
@@ -183,14 +187,14 @@ namespace SyncLib
 
 		#region COST CENTRE / LOCATION
 
-		public static LocationRoot SageCostCentreToMTLocation(SageCostCentre sagecostcentre)
+		public static LocationRoot SageCostCentreToMTLocation(SageCostCentre sagecostcentre, string prefix)
 		{
 			LocationRoot locationroot = new LocationRoot();
 			Location location = new Location();
 
 			location.id = "";
+			location.externalId = ExternalIDFormatter.AppendPrefix(sagecostcentre.PrimaryKey.DbValue.ToString(), prefix);
 			location.subsidiaries = null;
-			location.externalId = sagecostcentre.Code;
 			location.name = sagecostcentre.Name;
 			location.active = true;
 
@@ -202,7 +206,7 @@ namespace SyncLib
 
 		#region PAYMENT TERMS
 
-		public static TermRoot SagePaymentTermsToMTTerms(Tuple<decimal, int, int> terms)
+		public static TermRoot SagePaymentTermsToMTTerms(Tuple<decimal, int, int> terms, string prefix)
 		{
 			TermRoot termroot = new TermRoot();
 			Term term = new Term();
@@ -212,7 +216,7 @@ namespace SyncLib
 			term.discountPercent = terms.Item1;
 			term.discountDays = terms.Item2;
 			term.dueDays = terms.Item3;
-			term.externalId = string.Format("{0}-{1}-{2}", terms.Item1, terms.Item2, terms.Item3);
+			term.externalId = ExternalIDFormatter.AppendPrefix(string.Format("{0}-{1}-{2}", terms.Item1, terms.Item2, terms.Item3), prefix);
 			term.name = string.Format("Due Days: {0}", terms.Item3);
 			term.active = true;
 
@@ -224,14 +228,14 @@ namespace SyncLib
 
 		#region PAYMENT METHOD
 
-		public static PaymentMethodRoot SageBankAccountToMTPaymentMethod(Bank bank)
+		public static PaymentMethodRoot SageBankAccountToMTPaymentMethod(Bank bank, string prefix)
 		{
 			PaymentMethodRoot methodroot = new PaymentMethodRoot();
 			PaymentMethod method = new PaymentMethod();
 
 			method.id = "";
 			method.type = "ACH";
-			method.externalId = bank.Reference;//??
+			method.externalId = ExternalIDFormatter.AppendPrefix(bank.PrimaryKey.DbValue.ToString(), prefix);
 			method.active = true;
 
 			BankAccount bankaccount = new BankAccount()
@@ -257,15 +261,16 @@ namespace SyncLib
 
 		#region PURCHASE ORDER
 
-		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder)
+		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder, string prefix)
 		{
 			PurchaseOrderRoot purchaseorderroot = new PurchaseOrderRoot();
 			PurchaseOrder purchaseorder = new PurchaseOrder();
 
-			purchaseorder.externalId = poporder.DocumentNo;
+			purchaseorder.id = "";
+			purchaseorder.externalId = ExternalIDFormatter.AppendPrefix(poporder.PrimaryKey.DbValue.ToString(), prefix);
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(poporder.Supplier.SourceReference);
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(poporder.Supplier.PrimaryKey.DbValue.ToString(), prefix));
 			if (vendor == null) { return null; }
 			purchaseorder.vendor = new ObjID() { id = vendor.id };
 			// NEED TO ALSO OBTAIN DEPARTMENT, LOCATION, SUBSIDIARY AND TERMS.
@@ -290,22 +295,34 @@ namespace SyncLib
 				//item.department = 
 				//item.location = 
 				//item.glAccount = 
-				item.name = "Test"; // line.LineDescription;
+				item.name = line.LineDescription;
+				
+				SageStockItem sagestockitem = SageApi.GetStockItemByCode(line.ItemCode);
+				if (sagestockitem != null)
+					item.externalID = ExternalIDFormatter.AppendPrefix(sagestockitem.PrimaryKey.DbValue.ToString(), prefix);
 				item.quantity = new Quantity() { value = line.LineQuantity, precision = 2 };
 				item.quantityReceived = new Quantity() { value = 0, precision = 2 }; // no value in sage
 				item.billedQuantity = new Quantity() { value = line.LineQuantity, precision = 2 };
-				item.cost = new Cost() { amount = line.UnitBuyingPrice, precision = 2 };
-				item.amountDue = new Amount() { amount = line.LineTotalValue };
+				item.cost = new Cost()
+				{
+					amount = PriceConverter.FromDecimal(line.UnitBuyingPrice, 2),
+					precision = 2
+				};
+				item.amountDue = new Amount()
+				{
+					amount = PriceConverter.FromDecimal(line.LineTotalValue, 2),
+					precision = 2
+				};
 				item.lineNumber = linenumber; // no value in sage
 				item.closed = false; // no value in sage
 				item.description = line.ItemDescription;
 				item.poItemStatus = "New";
+				
 
 				items.Add(item);
 				linenumber++;
 			}
 			purchaseorder.items = items;
-
 
 			purchaseorderroot.purchaseOrder = purchaseorder;
 			return purchaseorderroot;
@@ -315,30 +332,38 @@ namespace SyncLib
 
 		#region INVOICE/BILL
 
-		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice)
+		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice, string prefix)
 		{
 			BillRoot billroot = new BillRoot();
 			Bill bill = new Bill();
 
 			bill.id = "";
-			bill.externalId = "";// invoice.InstrumentNo;
+			bill.externalId = ExternalIDFormatter.AppendPrefix(invoice.PrimaryKey.DbValue.ToString(), prefix);
 			// term, classification, etc
 			
 			bill.dueDate = invoice.DueDate.ToString("yyyy-MM-dd");
 			bill.transactionDate = invoice.InstrumentDate.ToString("yyyy-MM-dd"); //??
 			bill.invoiceNumber = invoice.InstrumentNo;
-			bill.amount = new Amount() { amount = invoice.CoreDocumentNetValue };	// ???
-			bill.balance = new Amount() { amount = 2 }; // ???
-			bill.totalTaxAmount = new Amount() { amount = invoice.CoreDocumentTaxValue }; // ??
+			bill.amount = new Amount()
+			{
+				amount = PriceConverter.FromDecimal(invoice.CoreDocumentNetValue, 2),
+				precision = 2
+			};
+			bill.balance = new Amount() { amount = 0 }; // ???
+			bill.totalTaxAmount = new Amount()
+			{
+				amount = PriceConverter.FromDecimal(invoice.CoreDocumentTaxValue, 2),
+				precision = 2
+			};
 			if (invoice.MemoNotes.Count > 0)
 				bill.memo = invoice.MemoNotes[0].Note; // JUST USE THE FIRST MEMO
 			else
 				bill.memo = "";
 			bill.poNumber = ""; // ??
-			bill.state = "Open"; // ??
+			bill.state = EnumMapper.SageDocumentStatusEnumToMTState(invoice.DocumentStatus);
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(invoice.Supplier.SourceReference);
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(invoice.Supplier.PrimaryKey.DbValue.ToString(), prefix));
 			if (vendor == null) { return null; }
 			bill.vendor = new ObjID() { id = vendor.id };
 
@@ -353,22 +378,26 @@ namespace SyncLib
 
 		#region CREDIT NOTES
 
-		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote)
+		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote, string prefix)
 		{
 			CreditRoot creditroot = new CreditRoot();
 			Credit credit = new Credit();
 
 			credit.id = "";
+			credit.externalId = ExternalIDFormatter.AppendPrefix(creditnote.PrimaryKey.DbValue.ToString(), prefix);
 			credit.creditNumber = creditnote.InstrumentNo;
-			credit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd"); ;
+			credit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd");
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(creditnote.Supplier.SourceReference);
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(creditnote.Supplier.PrimaryKey.DbValue.ToString(), prefix));
 			if (vendor == null) { return null; }
 			credit.vendor = new ObjID() { id = vendor.id };
 
-			credit.amount = new Amount() { amount = creditnote.CoreDocumentGrossValue }; // ???
-			credit.externalId = creditnote.InstrumentNo;
+			credit.amount = new Amount()
+			{
+				amount = PriceConverter.FromDecimal(creditnote.CoreDocumentGrossValue, 2),
+				precision = 2
+			};
 			credit.status = "Open";
 			if (creditnote.MemoNotes.Count > 0)
 				credit.memo = creditnote.MemoNotes[0].Note; // JUST USE THE FIRST MEMO
