@@ -368,6 +368,43 @@ namespace MTLib
 			return item;
 		}
 
+		public static Item GetItemByName(string companyid, string sessiontoken, string name)
+		{
+			Item item = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "ITEM";
+				query.query = string.Format("dimension_name=='{0}'", name);
+				//query.query = string.Format("dimension_name=in=('{0}')", name);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						item = results[0].ToObject<Item>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+			}
+
+			return item;
+		}
+
 		public static List<Item> GetItemsByCompanyID(string companyid, string sessiontoken)
 		{
 			List<Item> items = new List<Item>();

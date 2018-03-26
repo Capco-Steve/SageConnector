@@ -106,18 +106,20 @@ namespace SyncLib
 				Progress("Connected to Sage OK");
 				Progress(string.Format("Syncing to Company: {0}", found.name));
 
-				if (Continue) { SageNominalCodesToMineralTreeGLAccounts(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { SageSuppliersToMineralTreeVendors(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { SageBankAccountsToMineralTreePaymentMethods(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { SageDepartmentsToMineralTreeDepartments(found.id, sessiontoken, sagecompany.Prefix); }
+				//Item item = MTApi.GetItemByName(found.id, sessiontoken, "AB Built-In Cookers Single-Oven/300mm/White");
+				//Item item = MTApi.GetItemByName(found.id, sessiontoken, "ABBuilt");
+				//int y = 10;
+				//if (Continue) { SageNominalCodesToMineralTreeGLAccounts(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { SageSuppliersToMineralTreeVendors(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { SageDepartmentsToMineralTreeDepartments(found.id, sessiontoken, sagecompany.Prefix); }
 				if (Continue) { SageStockItemsToMineralTreeItems(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { SageCostCentresToMineralTreeLocations(found.id, sessiontoken, sagecompany.Prefix); }
-				//if (Continue) { SagePaymentTermsToMineralTreeTerms(found.id, sessiontoken, sagecompany.Prefix); }	// no update
-				if (Continue) { SageLivePurchaseOrdersToMineralTreePurchaseOrders(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { NewSageInvoicesToMineralTreeBills(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { NewMineralTreeBillsToSageInvoices(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { NewMineralTreePaymentsToSagePayments(found.id, sessiontoken, sagecompany.Prefix); }
-				if (Continue) { SageCreditNotesToMineralTreeCredit(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { SageCostCentresToMineralTreeLocations(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { SagePaymentTermsToMineralTreeTerms(found.id, sessiontoken, sagecompany.Prefix); }	// no update - moved to the historical invoice sync as it can only be run once
+				//if (Continue) { SageLivePurchaseOrdersToMineralTreePurchaseOrders(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { NewSageInvoicesToMineralTreeBills(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { NewMineralTreeBillsToSageInvoices(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { NewMineralTreePaymentsToSagePayments(found.id, sessiontoken, sagecompany.Prefix); }
+				//if (Continue) { SageCreditNotesToMineralTreeCredit(found.id, sessiontoken, sagecompany.Prefix); }
 			}
 
 			DateTime dtfinish = DateTime.Now;
@@ -215,6 +217,7 @@ namespace SyncLib
 
 				// VENDORS MUST BE SYNCED FIRST BECAUSE INVOICES HAVE A RELATIONSHIP WITH VENDORS
 				if (Continue) { SageSuppliersToMineralTreeVendors(found.id, sessiontoken, sagecompany.Prefix); }
+				if (Continue) { SagePaymentTermsToMineralTreeTerms(found.id, sessiontoken, sagecompany.Prefix); }	// no update - can only be run once
 				if (Continue) { SageHistoricalInvoicesToMineralTreeBills(found.id, sessiontoken, from, sagecompany.Prefix); };
 			}
 			DateTime dtfinish = DateTime.Now;
@@ -583,18 +586,17 @@ namespace SyncLib
 					}
 					else
 					{
-						Progress(string.Format("PO already exists, state: {0}", found.state));
 						// YES, CHECK STATUS
 						if (found.state.ToLower() == "closed")
 						{
 							// UPDATE SAGE
 							order.DocumentStatus = Sage.Accounting.OrderProcessing.DocumentStatusEnum.EnumDocumentStatusComplete;
 							order.Update();
-							Progress("State is closed so updating Sage state to complete");
+							Progress("PO already exists - state is closed so updating Sage state to complete");
 						}
 						else
 						{
-							Progress("State is not closed so no update required");
+							Progress("PO already exists - state is not closed so no update required");
 						}
 					}
 				}
@@ -611,7 +613,7 @@ namespace SyncLib
 			{
 				// CHECK THE STATE IS STILL VALID IN SAGE
 				Progress(string.Format("Processing PO {0}", mtpo.externalId));
-				POPOrder sagepo = SageApi.GetPurchaseOrderByPrimaryKey(mtpo.externalId);
+				POPOrder sagepo = SageApi.GetPurchaseOrderByPrimaryKey(ExternalIDFormatter.RemovePrefix(mtpo.externalId, prefix));
 
 				if (sagepo.DocumentStatus != Sage.Accounting.OrderProcessing.DocumentStatusEnum.EnumDocumentStatusLive)
 				{

@@ -97,7 +97,7 @@
 			this.btnLoadHistoricalInvoices.Name = "btnLoadHistoricalInvoices";
 			this.btnLoadHistoricalInvoices.Size = new System.Drawing.Size(156, 23);
 			this.btnLoadHistoricalInvoices.TabIndex = 3;
-			this.btnLoadHistoricalInvoices.Text = "Load Historical Invoices";
+			this.btnLoadHistoricalInvoices.Text = "Load Historical Invoices...";
 			this.btnLoadHistoricalInvoices.UseVisualStyleBackColor = true;
 			this.btnLoadHistoricalInvoices.Click += new System.EventHandler(this.btnLoadHistoricalInvoices_Click);
 			// 

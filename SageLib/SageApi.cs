@@ -28,7 +28,7 @@ namespace SageLib
             try
             {
                 application = new Application();
-                application.Connect();
+				application.Connect();
 				foreach(Sage.Accounting.Company company in application.Companies)
 				{
 					if(company.Name == companyname)
@@ -296,7 +296,7 @@ namespace SageLib
 			return results;
 		}
 
-		public static Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry GetPurchaseInvoiceByPrimaryKey(string id)
+		public static Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry GetInvoiceByPrimaryKey(string id)
 		{
 			Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry = null;
 			if (application != null)
@@ -363,7 +363,7 @@ namespace SageLib
 					payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
 
 					// SET THE TRANSACTION REFERENCES
-					Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetPurchaseInvoiceByPrimaryKey(invoiceid);
+					Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetInvoiceByPrimaryKey(invoiceid);
 					if(invoice != null)
 					{
 						payment.InstrumentNo = invoice.InstrumentNo; // ??

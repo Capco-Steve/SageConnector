@@ -71,7 +71,7 @@ namespace SyncLib
 
 		#endregion
 
-		#region ITEMS
+		#region ITEMS / STOCKITEMS
 
 		public static Item FindItemByExternalID(string externalid)
 		{

@@ -36,7 +36,7 @@ namespace SyncLib
 			vendor.externalId = ExternalIDFormatter.AppendPrefix(supplier.PrimaryKey.DbValue.ToString(), prefix);
 			vendor.form1099Enabled = false;
 			vendor.name = supplier.Name;
-			vendor.active = true; // TODO - MIGHT CHANGE WHEN WE FIGURE OUT THE MATCHING FIELD
+			vendor.active = true; // NO MATCHING FIELD IN SAGE - CLOSEST IS ON HOLD???
 
 			vendor.address = new Address
 			{
@@ -116,7 +116,7 @@ namespace SyncLib
 			department.id = "";
 			department.externalId = ExternalIDFormatter.AppendPrefix(sagedepartment.PrimaryKey.DbValue.ToString(), prefix);
 			department.name = sagedepartment.Name;
-			department.active = true;
+			department.active = true; // NO MATCHING FIELD IN SAGE
 
 			departmentroot.department = department;
 			return departmentroot;
@@ -132,7 +132,8 @@ namespace SyncLib
 			Item item = new Item();
 
 			item.id = "";
-			item.active = true;
+			item.active = sagestockitem.StockItemStatus == Sage.Accounting.Stock.StockItemStatusEnum.EnumStockItemStatusTypeActive ? true : false;
+			
 			item.externalId = ExternalIDFormatter.AppendPrefix(sagestockitem.PrimaryKey.DbValue.ToString(), prefix);
 			item.name = sagestockitem.Name;
 			item.type = "INVENTORY"; // ???
@@ -177,7 +178,7 @@ namespace SyncLib
 			glaccount.ledgerType = "EXPENSE_ACCOUNT";
 			glaccount.accountNumber = sagenominalcode.Reference;
 			glaccount.name = sagenominalcode.Name;
-			glaccount.active = true;
+			glaccount.active = true; // NO MATCHING FIELD IN SAGE
 
 			glaccountroot.glAccount = glaccount;
 			return glaccountroot;
@@ -196,7 +197,7 @@ namespace SyncLib
 			location.externalId = ExternalIDFormatter.AppendPrefix(sagecostcentre.PrimaryKey.DbValue.ToString(), prefix);
 			location.subsidiaries = null;
 			location.name = sagecostcentre.Name;
-			location.active = true;
+			location.active = true; // NO MATCHING FIELD IN SAGE
 
 			locationroot.location = location;
 			return locationroot;
@@ -226,7 +227,7 @@ namespace SyncLib
 
 		#endregion
 
-		#region PAYMENT METHOD
+		#region BANK ACCOUNT / PAYMENT METHOD
 
 		public static PaymentMethodRoot SageBankAccountToMTPaymentMethod(Bank bank, string prefix)
 		{
@@ -236,7 +237,7 @@ namespace SyncLib
 			method.id = "";
 			method.type = "ACH";
 			method.externalId = ExternalIDFormatter.AppendPrefix(bank.PrimaryKey.DbValue.ToString(), prefix);
-			method.active = true;
+			method.active = true; // NO MATCHING FIELD IN SAGEs
 
 			BankAccount bankaccount = new BankAccount()
 			{
@@ -273,55 +274,59 @@ namespace SyncLib
 			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(poporder.Supplier.PrimaryKey.DbValue.ToString(), prefix));
 			if (vendor == null) { return null; }
 			purchaseorder.vendor = new ObjID() { id = vendor.id };
-			// NEED TO ALSO OBTAIN DEPARTMENT, LOCATION, SUBSIDIARY AND TERMS.
-			// WHEN MINERAL TREE PROVIDE API ACCESS
 
 			purchaseorder.dueDate = poporder.DocumentDate.ToString("yyyy-MM-dd");
 			purchaseorder.poNumber = poporder.DocumentNo;
 			purchaseorder.memo = "";
 			purchaseorder.state = "PendingBilling";
-			purchaseorder.poType = "Standard"; // ??
-			//purchaseorder.expenses = null; // ??
+			purchaseorder.poType = "Standard";
 
 			// PURCHASE ORDER ITEMS
 			List<PurchaseOrderItem> items = new List<PurchaseOrderItem>();
 			int linenumber = 1;
-			foreach(Sage.Accounting.POP.POPOrderReturnLine line in poporder.Lines)
+			foreach (Sage.Accounting.POP.POPOrderReturnLine line in poporder.Lines)
 			{
 				PurchaseOrderItem item = new PurchaseOrderItem();
 
-				//item.companyItem = i think this is item object
-				//item.classification = 
-				//item.department = 
-				//item.location = 
-				//item.glAccount = 
+				// 
+				// FIGURE OUT THE MT ID OF THE LINE ITEM
+				SageStockItem ssi = SageApi.GetStockItemByCode(line.ItemCode);
+				if (ssi != null)
+				{
+					Item mtitem = MTReferenceData.FindItemByExternalID(ExternalIDFormatter.AppendPrefix(ssi.PrimaryKey.DbValue.ToString(), prefix));
+					if (mtitem != null)
+					{
+						item.companyItem = new ObjID() { id = mtitem.id };
+					}
+				}
+				//
+
 				item.name = line.LineDescription;
-				
-				SageStockItem sagestockitem = SageApi.GetStockItemByCode(line.ItemCode);
-				if (sagestockitem != null)
-					item.externalID = ExternalIDFormatter.AppendPrefix(sagestockitem.PrimaryKey.DbValue.ToString(), prefix);
-				item.quantity = new Quantity() { value = line.LineQuantity, precision = 2 };
-				item.quantityReceived = new Quantity() { value = 0, precision = 2 }; // no value in sage
-				item.billedQuantity = new Quantity() { value = line.LineQuantity, precision = 2 };
+				item.quantity = new Quantity() { value = PriceConverter.FromDecimal(line.LineQuantity, 2), precision = 2 };
+				item.quantityReceived = new Quantity() { value = 1, precision = 0 }; // no value in sage
+				item.billedQuantity = new Quantity() { value = PriceConverter.FromDecimal(line.LineQuantity, 2), precision = 2 };
+
 				item.cost = new Cost()
 				{
 					amount = PriceConverter.FromDecimal(line.UnitBuyingPrice, 2),
-					precision = 2
+					precision = 0
 				};
+
 				item.amountDue = new Amount()
 				{
 					amount = PriceConverter.FromDecimal(line.LineTotalValue, 2),
-					precision = 2
+					precision = 0
 				};
+
 				item.lineNumber = linenumber; // no value in sage
 				item.closed = false; // no value in sage
 				item.description = line.ItemDescription;
 				item.poItemStatus = "New";
-				
 
 				items.Add(item);
 				linenumber++;
 			}
+
 			purchaseorder.items = items;
 
 			purchaseorderroot.purchaseOrder = purchaseorder;
