@@ -16,12 +16,12 @@ namespace SyncLib
 		public static string SageDocumentStatusEnumToMTState(SageInvoiceState sageinvoicestate)
 		{
 			string state = "";
+
 			switch(sageinvoicestate)
 			{
 				case SageInvoiceState.DocumentStatusBlank: state = "Open"; break;
 				case SageInvoiceState.DocumentStatusPart: state = "Open"; break;
-				case SageInvoiceState.DocumentStatusFull: state = "Settled"; break; //??
-
+				case SageInvoiceState.DocumentStatusFull: state = "Settled"; break; // ??
 				default: state = "Unknown"; break;
 			}
 

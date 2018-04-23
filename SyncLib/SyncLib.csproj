@@ -46,6 +46,14 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Software\Assemblies-Unzipped\Sage.Accounting.DataModel.dll</HintPath>
     </Reference>
+    <Reference Include="Sage.Accounting.Exceptions.Common, Version=19.0.0.0, Culture=neutral, PublicKeyToken=b2daa66d74953d11, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Software\Assemblies-Unzipped\Sage.Accounting.Exceptions.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Sage.Accounting.Exceptions.Financials, Version=19.0.0.0, Culture=neutral, PublicKeyToken=b2daa66d74953d11, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Software\Assemblies-Unzipped\Sage.Accounting.Exceptions.Financials.dll</HintPath>
+    </Reference>
     <Reference Include="Sage.Accounting.Financials, Version=19.0.0.0, Culture=neutral, PublicKeyToken=56cc4aa2c6a12364, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Software\Assemblies-Unzipped\Sage.Accounting.Financials.dll</HintPath>
@@ -85,7 +93,6 @@
     <Compile Include="EnumMapper.cs" />
     <Compile Include="Mapper.cs" />
     <Compile Include="MTReferenceData.cs" />
-    <Compile Include="SageCompanyConfig.cs" />
     <Compile Include="Sync.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncEventArgs.cs" />

@@ -17,15 +17,20 @@ namespace SyncLib
 		private static List<GlAccount> GlAccounts = new List<GlAccount>();
 		private static List<Location> Locations = new List<Location>();
 		private static List<PaymentMethod> PaymentMethods = new List<PaymentMethod>();
+		private static List<Classification> Classifications = new List<Classification>();
 
-		public static void LoadReferenceData(string companyid, string sessiontoken)
+		public static void LoadReferenceData(string companyid, string sessiontoken, bool fullsync)
 		{
 			Vendors = MTApi.GetVendorsByCompanyID(companyid, sessiontoken);
-			Departments = MTApi.GetDepartmentsByCompanyID(companyid, sessiontoken);
 			Items = MTApi.GetItemsByCompanyID(companyid, sessiontoken);
-			GlAccounts = MTApi.GetGlAccountsByCompanyID(companyid, sessiontoken);
-			Locations = MTApi.GetLocationsByCompanyID(companyid, sessiontoken);
-			PaymentMethods = MTApi.GetPaymentMethodsByCompanyName(SyncSettings.MTCompanyNameToSync, sessiontoken);
+			if (fullsync)
+			{
+				Departments = MTApi.GetDepartmentsByCompanyID(companyid, sessiontoken);
+				GlAccounts = MTApi.GetGlAccountsByCompanyID(companyid, sessiontoken);
+				Locations = MTApi.GetLocationsByCompanyID(companyid, sessiontoken);
+				PaymentMethods = MTApi.GetPaymentMethodsByCompanyName(SyncSettings.MTCompanyNameToSync, sessiontoken);
+				Classifications = MTApi.GetClassificationByCompanyID(companyid, sessiontoken);
+			}
 		}
 
 		#region VENDORS
@@ -148,6 +153,25 @@ namespace SyncLib
 		public static int GetPaymentMethodCount()
 		{
 			return PaymentMethods.Count();
+		}
+
+		#endregion
+
+		#region CLASSIFICATION
+
+		public static Classification FindClassificationByExternalID(string externalid)
+		{
+			return Classifications.Find(item => item.externalId == externalid);
+		}
+
+		public static void AddClassification(Classification classification)
+		{
+			Classifications.Add(classification);
+		}
+
+		public static int GetClassificationCount()
+		{
+			return Classifications.Count();
 		}
 
 		#endregion

@@ -34,6 +34,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Software\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="Sage.Utils, Version=19.0.0.0, Culture=neutral, PublicKeyToken=b2daa66d74953d11, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Software\Assemblies-Unzipped\Sage.Utils.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -55,8 +59,13 @@
     <Compile Include="Objects\AvailableBalance.cs" />
     <Compile Include="Objects\BankAccount.cs" />
     <Compile Include="Objects\Bill.cs" />
+    <Compile Include="Objects\BillCredit.cs" />
+    <Compile Include="Objects\BillCreditRoot.cs" />
     <Compile Include="Objects\BillRoot.cs" />
+    <Compile Include="Objects\Classification.cs" />
+    <Compile Include="Objects\ClassificationRoot.cs" />
     <Compile Include="Objects\Company.cs" />
+    <Compile Include="Objects\CompanyItem.cs" />
     <Compile Include="Objects\Cost.cs" />
     <Compile Include="Objects\Credit.cs" />
     <Compile Include="Objects\CreditRoot.cs" />

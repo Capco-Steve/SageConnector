@@ -15,6 +15,7 @@ using SageCostCentre = Sage.Accounting.SystemManager.CostCentre;
 using Bank = Sage.Accounting.CashBook.Bank;
 using POPOrder = Sage.Accounting.POP.POPOrder;
 using PostedPurchaseAccountEntry = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry;
+using TaxCode = Sage.Accounting.TaxModule.TaxCode;
 
 namespace SyncLib
 {
@@ -46,7 +47,8 @@ namespace SyncLib
 
 		public static bool Same(SageStockItem sagestockitem, Item item)
 		{
-			if (sagestockitem.Name != item.name || sagestockitem.AverageBuyingPrice != item.cost.amount)
+			bool active = sagestockitem.StockItemStatus == Sage.Accounting.Stock.StockItemStatusEnum.EnumStockItemStatusTypeActive ? true : false;
+			if (sagestockitem.Name != item.name || item.active != active)
 			{
 				return false;
 			}
@@ -71,6 +73,19 @@ namespace SyncLib
 		public static bool Same(Bank bank, PaymentMethod paymentmethod)
 		{
 			if (bank.Name != paymentmethod.bankAccount.name || bank.BankAccount.BankAccountNumber != paymentmethod.bankAccount.accountNumber)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		public static bool Same(TaxCode taxcode, Classification classification)
+		{
+			string name = string.Format("{0}-{1} ({2})", taxcode.Code, taxcode.Name, taxcode.TaxRate);
+			if (name != classification.name)
 			{
 				return false;
 			}

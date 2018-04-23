@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Globalization;
 using Sage.Common.Data;
+using SageLib.Objects;
+using Utils;
 using Supplier = Sage.Accounting.PurchaseLedger.Supplier;
 using Bank = Sage.Accounting.CashBook.Bank;
 using Department = Sage.Accounting.SystemManager.Department;
@@ -13,6 +15,9 @@ using StockItem = Sage.Accounting.Stock.StockItem;
 using NominalCode = Sage.Accounting.NominalLedger.NominalCode;
 using CostCentre = Sage.Accounting.SystemManager.CostCentre;
 using POPOrder = Sage.Accounting.POP.POPOrder;
+using NominalAnalysisItem = Sage.Accounting.TradeLedger.NominalAnalysisItem;
+using TaxAnalysisItem = Sage.Accounting.TradeLedger.TaxAnalysisItem;
+using TaxCode = Sage.Accounting.TaxModule.TaxCode;
 
 namespace SageLib
 {
@@ -116,6 +121,17 @@ namespace SageLib
 			return list;
 		}
 
+		public static Department GetDepartmentByPrimaryKey(string key)
+		{
+			Department department = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				department = Sage.Accounting.SystemManager.DepartmentFactory.Factory.Fetch(dbkey);
+			}
+			return department;
+		}
+
 		#endregion
 
 		#region STOCK ITEMS
@@ -157,6 +173,30 @@ namespace SageLib
 			}
 
 			return list;
+		}
+
+		public static NominalCode GetNominalCodeByPrimaryKey(string key)
+		{
+			NominalCode nominalcode = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				nominalcode = Sage.Accounting.NominalLedger.NominalCodeFactory.Factory.Fetch(dbkey);
+			}
+
+			return nominalcode;
+		}
+
+		public static NominalCode GetNominalCodeByAccountNumber(string accountnumber)
+		{
+			NominalCode nominalcode = null;
+			if (application != null)
+			{
+				Sage.Accounting.NominalLedger.NominalCodes codes = Sage.Accounting.NominalLedger.NominalCodesFactory.Factory.FetchWithAccountNumber(accountnumber);
+
+				nominalcode = codes.First;
+			}
+			return nominalcode;
 		}
 
 		#endregion
@@ -247,7 +287,7 @@ namespace SageLib
 
 		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetHistoricalInvoices(DateTime from)
 		{
-			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
+			List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> results = new List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>();
 			if (application != null)
 			{
 				// PURCHASE INVOICES
@@ -260,10 +300,18 @@ namespace SageLib
 
 				invoices.Find(query);
 
-				list = invoices.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList();
+				// FILTER THE DATA - ONLY UNPAID AND PART PAID INVOICES REQUIRED
+				List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = invoices.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList();
+				foreach (Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry in list)
+				{
+					if ((entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusBlank || entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusPart) && entry.InstrumentNo.Length > 0)
+					{
+						results.Add(entry);
+					}
+				}
 			}
 
-			return list;
+			return results;
 		}
 
 		public static List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> GetNewInvoices(DateTime from)
@@ -272,6 +320,7 @@ namespace SageLib
 			if (application != null)
 			{
 				// PURCHASE INVOICES
+				//Sage.Accounting.PurchaseLedger.PurchaseInvoicePostingFactory.Factory.Fetch()
 				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
 				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 
@@ -286,7 +335,7 @@ namespace SageLib
 				List<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry> list = invoices.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList();
 				foreach(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry in list)
 				{
-					if(entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusBlank)
+					if ((entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusBlank || entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusPart) && entry.InstrumentNo.Length > 0)
 					{
 						results.Add(entry);
 					}
@@ -302,13 +351,36 @@ namespace SageLib
 			if (application != null)
 			{
 				Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
-				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry e = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntryFactory.Factory.Fetch(key);
+				entry = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntryFactory.Factory.Fetch(key);
 			}
 
 			return entry;
 		}
 
-		public static string CreateInvoice(string supplierid, string invoicenumber, string invoicedate, decimal amount, decimal taxamount)
+		public static Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry GetInvoiceByInvoiceNumber(string invoicenumber)
+		{
+			Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry result = null;
+			if (application != null)
+			{
+				// PURCHASE INVOICES
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
+				query.Filters.Add(filter);
+
+				Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTNO, invoicenumber);
+				query.Filters.Add(filter1);
+
+				invoices.Find(query);
+
+				result = invoices.First;
+			}
+
+			return result;
+		}
+
+		public static string CreateInvoice(string supplierid, string invoicenumber, string invoicedate, decimal amount, decimal taxamount, List<LineItem> lineitems)
 		{
 			string newid = "";
 			try
@@ -321,11 +393,43 @@ namespace SageLib
 
 				invoice.InstrumentDate = DateTime.ParseExact(invoicedate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
 
-				invoice.NetValue = amount;
+				invoice.NetValue = amount - taxamount;
 				invoice.TaxValue = taxamount;
 
 				invoice.Authorised = Sage.Accounting.AuthorisationTypeEnum.AuthorisationTypeNotRequired;
 
+				// ADD IN THE LINE ITEMS - GLACCOUNT, DEPARTMENT, CLASSIFICATION (VAT Rate), LINE AMOUNT
+				NominalAnalysisItem nominal = (Sage.Accounting.TradeLedger.NominalAnalysisItem) invoice.NominalAnalysisItems[0];
+				TaxAnalysisItem tax = (Sage.Accounting.TradeLedger.TaxAnalysisItem)invoice.TaxAnalysisItems[0];
+
+				bool first = true;
+
+				foreach(LineItem lineitem in lineitems)
+				{
+					if(first)
+					{
+						first = false;
+					}
+					else
+					{
+						nominal = (NominalAnalysisItem)invoice.NominalAnalysisItems.AddNew();
+						tax = (TaxAnalysisItem)invoice.TaxAnalysisItems.AddNew();
+					}
+
+					// CREATE THE NOMINAL ANALYSIS
+					NominalCode nominalcode = SageApi.GetNominalCodeByPrimaryKey(lineitem.GLAccountID);
+					nominal.NominalSpecification = nominalcode.NominalSpecification;
+					nominal.Narrative = lineitem.Description;
+					nominal.Amount = lineitem.NetAmount;
+
+					// CREATE THE VAT ANALYSIS
+					TaxCode taxcode = SageApi.GetVatRateByPrimaryKey(lineitem.ClassificationID);
+					tax.TaxCode = taxcode;
+					tax.Goods = lineitem.NetAmount;
+					tax.TaxAmount = lineitem.TaxAmount;
+				}
+
+				//
 				invoice.Validate();
 				invoice.Update(); // NO WAY TO TELL IF THIS SUCCEEDS!
 				newid = invoice.ActualPostedAccountEntry.PrimaryKey.DbValue.ToString();
@@ -334,16 +438,46 @@ namespace SageLib
 			catch(Exception ex)
 			{
 				newid = "";
+				Logger.WriteLog(ex);
 			}
 
 			return newid;
+		}
+
+		public static bool UpdateInvoice(string invoiceid, string newsupplierid, string newinvoicenumber, string newinvoicedate, decimal newamount, decimal newtaxamount)
+		{
+			bool result = true;
+			try
+			{
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetInvoiceByPrimaryKey(invoiceid);
+
+				// THESE ARE THE ONLY WRITABLE FIELDS
+				invoice.InstrumentNo = newinvoicenumber;
+				invoice.InstrumentDate = DateTime.ParseExact(newinvoicedate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
+
+				// THESE FIELDS ARE READ ONLY
+				//invoice.Supplier = SageApi.GetSupplierByPrimaryKey(supplierid);
+				//invoice.NetValue = amount;
+				//invoice.TaxValue = taxamount;
+				//invoice.Authorised = Sage.Accounting.AuthorisationTypeEnum.AuthorisationTypeNotRequired;
+
+				invoice.Validate();
+				invoice.Update(); // NO WAY TO TELL IF THIS SUCCEEDS!
+
+			}
+			catch (Exception ex)
+			{
+				result = false;
+			}
+
+			return result;
 		}
 
 		#endregion
 
 		#region PAYMENTS
 
-		public static string CreatePayment(string supplierid, string bankid, string invoiceid, string paymentdate, decimal amount, decimal taxamount)
+		public static string CreatePayment(Supplier supplier, string bankid, string paymentdate, decimal amount, decimal taxamount)
 		{
 			string newid = "";
 			try
@@ -357,18 +491,10 @@ namespace SageLib
 					payment.Bank = SageApi.GetBankByPrimaryKey(bankid);
 
 					// SET THE SUPPLIER
-					payment.Supplier = SageApi.GetSupplierByPrimaryKey(supplierid);
+					payment.Supplier = supplier;
 
 					// SET THE RECEIPT DATE
 					payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
-
-					// SET THE TRANSACTION REFERENCES
-					Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetInvoiceByPrimaryKey(invoiceid);
-					if(invoice != null)
-					{
-						payment.InstrumentNo = invoice.InstrumentNo; // ??
-					}
-					payment.SecondReferenceNo = ""; // ??
 
 					// SET THE AMOUNTS
 					payment.NetValue = amount;
@@ -387,9 +513,22 @@ namespace SageLib
 			catch(Exception ex)
 			{
 				newid = "";
+				Logger.WriteLog(ex);
 			}
 
 			return newid;
+		}
+
+		public static Sage.Accounting.PurchaseLedger.PurchaseBankPaymentPosting GetPaymentByPrimaryKey(string id)
+		{
+			Sage.Accounting.PurchaseLedger.PurchaseBankPaymentPosting payment = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
+				payment = Sage.Accounting.PurchaseLedger.PurchaseBankPaymentPostingFactory.Factory.Fetch(key);
+			}
+
+			return payment;
 		}
 
 		#endregion
@@ -412,6 +551,34 @@ namespace SageLib
 			}
 
 			return list;
+		}
+
+		#endregion
+
+		#region VAT RATES / CLASS
+
+		public static List<TaxCode> GetVatRates()
+		{
+			List<TaxCode> list = null;
+			if (application != null)
+			{
+				Sage.Accounting.TaxModule.TaxCodes codes = Sage.Accounting.TaxModule.TaxCodesFactory.Factory.CreateNew();
+				list = codes.GetList().Cast<Sage.Accounting.TaxModule.TaxCode>().ToList();
+			}
+
+			return list;
+		}
+
+		public static TaxCode GetVatRateByPrimaryKey(string key)
+		{
+			TaxCode taxcode = null;
+			if (application != null)
+			{
+				Sage.Common.Data.DbKey dbkey = new Sage.Common.Data.DbKey(Convert.ToInt32(key));
+				taxcode = Sage.Accounting.TaxModule.TaxCodeFactory.Factory.Fetch(dbkey);
+			}
+
+			return taxcode;
 		}
 
 		#endregion

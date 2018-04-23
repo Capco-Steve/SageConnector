@@ -17,7 +17,9 @@ namespace MTLib
     public static class MTApi
     {
 		public static event EventHandler<MTEventArgs> OnError;
-		private static JsonSerializerSettings Settings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
+		public static bool EnableHTTPLogging = false;
+		private static JsonSerializerSettings Settings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore, MissingMemberHandling = MissingMemberHandling.Ignore };
+		private static JsonSerializer JS = new JsonSerializer() { NullValueHandling = NullValueHandling.Ignore, MissingMemberHandling = MissingMemberHandling.Ignore };
 
 		#region AUTHENTICATION
 
@@ -34,7 +36,8 @@ namespace MTLib
             {
 				token = null;
 				Logger.WriteLog(ex);
-            }
+				Error(ex.ToString());
+			}
 
             return token;
         }
@@ -72,6 +75,7 @@ namespace MTLib
 			{
 				user = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return user;
@@ -95,6 +99,7 @@ namespace MTLib
 			{
 				companies = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return companies;
@@ -137,6 +142,7 @@ namespace MTLib
 			{
 				vendorroot = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return vendorroot;
@@ -173,31 +179,49 @@ namespace MTLib
 			catch(Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return vendors;
 		}
 
-		public static Vendor GetVendorByID(int vendorid, string sessiontoken)
+		public static VendorRoot GetVendorByID(string companyid, string id, string sessiontoken)
 		{
-			Vendor vendor = null;
+			VendorRoot vendorroot = null;
 			try
 			{
-				string url = string.Format("{0}{1}/{2}", MTSettings.BaseUrl, MTSettings.VendorUrl, vendorid);
-				string json = HTTPRequest(url, "GET", sessiontoken, null);
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "VENDOR";
+				query.query = string.Format("id=={0}", id);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
 
 				if (json.Length > 0)
 				{
-					vendor = JsonConvert.DeserializeObject<Vendor>(json);
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						vendorroot = new VendorRoot();
+						vendorroot.vendor = results[0].ToObject<Vendor>();
+					}
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
-				vendor = null;
+				vendorroot = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
-			return vendor;
+			return vendorroot;
 		}
 
 		public static Vendor UpdateVendor(string vendorid, VendorRoot vendorroot, string sessiontoken)
@@ -217,6 +241,7 @@ namespace MTLib
 			{
 				updatedvendor = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedvendor;
@@ -239,6 +264,7 @@ namespace MTLib
 			{
 				newvendor = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newvendor;
@@ -279,6 +305,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return departments;
@@ -301,6 +328,7 @@ namespace MTLib
 			{
 				updateddepartment = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updateddepartment;
@@ -323,6 +351,7 @@ namespace MTLib
 			{
 				newdepartment = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newdepartment;
@@ -363,6 +392,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return item;
@@ -400,6 +430,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return item;
@@ -436,6 +467,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return items;
@@ -458,6 +490,7 @@ namespace MTLib
 			{
 				updateditem = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updateditem;
@@ -480,6 +513,7 @@ namespace MTLib
 			{
 				newitem = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newitem;
@@ -520,6 +554,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return glaccounts;
@@ -542,6 +577,7 @@ namespace MTLib
 			{
 				updatedglaccount = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedglaccount;
@@ -564,6 +600,7 @@ namespace MTLib
 			{
 				newglaccount = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newglaccount;
@@ -604,6 +641,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return locations;
@@ -626,6 +664,7 @@ namespace MTLib
 			{
 				updatedlocation = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedlocation;
@@ -648,6 +687,7 @@ namespace MTLib
 			{
 				newlocation = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newlocation;
@@ -674,6 +714,7 @@ namespace MTLib
 			{
 				newterm = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newterm;
@@ -700,6 +741,7 @@ namespace MTLib
 			{
 				newpaymentmethod = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newpaymentmethod;
@@ -722,6 +764,7 @@ namespace MTLib
 			{
 				updatedpaymentmethod = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedpaymentmethod;
@@ -730,7 +773,6 @@ namespace MTLib
 		public static List<PaymentMethod> GetPaymentMethodsByCompanyName(string companyname, string sessiontoken)
 		{
 			// PAYMENT METHOD ISN'T SUPPORTED BY SEARCH SO WE HAVE TO QUERY THE COMPANY OBJECT AND GET THE PAYMENT METHODS FROM THAT 
-
 			List<PaymentMethod> paymentmethods = new List<PaymentMethod>();
 			List<Company> companies = MTApi.GetCompaniesForCurrentUser(sessiontoken);
 
@@ -801,6 +843,7 @@ namespace MTLib
 			{
 				updatedpurchaseorder = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedpurchaseorder;
@@ -823,6 +866,7 @@ namespace MTLib
 			{
 				newpurchaseorder = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newpurchaseorder;
@@ -856,6 +900,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return order;
@@ -892,6 +937,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return orders;
@@ -900,7 +946,7 @@ namespace MTLib
 
 		#region INVOICES/BILLS
 
-		public static List<Bill> GetBillsWithNoExternalID(string companyid, string sessiontoken)
+		public static List<Bill> GetNewBillsWithStatusOpenOrPendingSettlement(string companyid, string sessiontoken)
 		{
 			List<Bill> bills = new List<Bill>();
 			try
@@ -909,7 +955,9 @@ namespace MTLib
 
 				SearchQuery query = new SearchQuery();
 				query.view = "BILL";
-				query.query = string.Format("bill_externalId=={0}", "''");
+				// 1 = Open, 2 = Settled/Paid, 3 = Pending Settlement, 4 = Draft, 6 = Closed By Credit, 8 = Awaiting Approval 
+				//query.query = string.Format("billOrCredit_status=={0};bill_externalId==''", "1");
+				query.query = string.Format("billOrCredit_status=in=({0},{1},{2});bill_externalId==''", "1", "2", "3");
 				query.page = 0;
 				query.count = 10000;
 				query.sortField = "modified";
@@ -923,13 +971,14 @@ namespace MTLib
 					IList<JToken> results = obj["entities"].Children().ToList();
 					foreach (JToken token in results)
 					{
-						bills.Add(token.ToObject<Bill>());
+						bills.Add(token.ToObject<Bill>(JS));
 					}
 				}
 			}
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return bills;
@@ -950,7 +999,7 @@ namespace MTLib
 				query.sortField = "modified";
 				query.sortAsc = true;
 
-				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query, Settings));
 
 				if (json.Length > 0)
 				{
@@ -959,13 +1008,77 @@ namespace MTLib
 
 					if(results.Count() == 1)
 					{
-						bill = results[0].ToObject<Bill>();
+						bill = results[0].ToObject<Bill>(JS);
 					}
 				}
 			}
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return bill;
+		}
+
+		/*
+		public static Bill GetBillByID(string companyid, string sessiontoken, string id)
+		{
+			Bill bill = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}", MTSettings.BaseUrl, MTSettings.BillUrl, companyid);
+				string json = HTTPRequest(url, "GET", sessiontoken, null);
+
+				if (json.Length > 0)
+				{
+					bill = JsonConvert.DeserializeObject<Bill>(json, Settings);
+				}
+			}
+			catch (Exception ex)
+			{
+				bill = null;
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return bill;
+		}
+		*/
+		
+		public static Bill GetBillByID(string companyid, string sessiontoken, string id)
+		{
+			Bill bill = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "BILL";
+				query.query = string.Format("id=={0}", id);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query, Settings));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						bill = results[0].ToObject<Bill>(JS);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				bill = null;
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return bill;
@@ -1002,6 +1115,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return bills;
@@ -1017,13 +1131,14 @@ namespace MTLib
 
 				if (json.Length > 0)
 				{
-					updatedbill = JsonConvert.DeserializeObject<Bill>(json);
+					updatedbill = JsonConvert.DeserializeObject<Bill>(json, Settings);
 				}
 			}
 			catch (Exception ex)
 			{
 				updatedbill = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedbill;
@@ -1035,17 +1150,18 @@ namespace MTLib
 			try
 			{
 				string url = string.Format("{0}{1}/{2}", MTSettings.BaseUrl, MTSettings.BillUrl, companyid);
-				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(billroot));
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(billroot, Settings));
 
 				if (json.Length > 0)
 				{
-					newbill = JsonConvert.DeserializeObject<Bill>(json);
+					newbill = JsonConvert.DeserializeObject<Bill>(json, Settings);
 				}
 			}
 			catch (Exception ex)
 			{
 				newbill = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newbill;
@@ -1064,8 +1180,14 @@ namespace MTLib
 
 				SearchQuery query = new SearchQuery();
 				query.view = "PAYMENT";
-				query.query = string.Format("payment_externalId=={0}", "''");
-				//query.query = string.Format("payment_status=in=({0})", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14"); // ; payment_status==0
+				// payment_status: Approved = 1000, Paid = 1010, Void = 2000
+				// MT have different Paid status depending on the payment type!
+				// Manual Check = 1070
+				// Biller Portal = 1120
+				// Manual Card = 1110
+				// All other types = 1010
+				//query.query = string.Format("payment_status=={0};payment_externalId==''", "1010"); // THIS NEEDS TO BE CHANGED TO PAID
+				query.query = string.Format("payment_status=in=({0},{1},{2},{3});payment_externalId==''", "1010", "1070", "1120", "1110");
 				query.page = 0;
 				query.count = 10000;
 				query.sortField = "modified";
@@ -1090,6 +1212,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return payments;
@@ -1105,13 +1228,14 @@ namespace MTLib
 
 				if (json.Length > 0)
 				{
-					updatedpayment = JsonConvert.DeserializeObject<Payment>(json);
+					updatedpayment = JsonConvert.DeserializeObject<Payment>(json, Settings);
 				}
 			}
 			catch (Exception ex)
 			{
 				updatedpayment = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedpayment;
@@ -1149,6 +1273,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return credit;
@@ -1171,6 +1296,7 @@ namespace MTLib
 			{
 				updatedcredit = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return updatedcredit;
@@ -1193,9 +1319,124 @@ namespace MTLib
 			{
 				newcredit = null;
 				Logger.WriteLog(ex);
+				Error(ex.ToString());
 			}
 
 			return newcredit;
+		}
+
+		#endregion
+
+		#region BILLCREDIT
+
+		public static BillCredit CreateBillCredit(string companyid, BillCreditRoot billcreditroot, string sessiontoken)
+		{
+			BillCredit newbillcredit = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}", MTSettings.BaseUrl, MTSettings.BillCreditUrl, companyid);
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(billcreditroot));
+
+				if (json.Length > 0)
+				{
+					newbillcredit = JsonConvert.DeserializeObject<BillCredit>(json);
+				}
+			}
+			catch (Exception ex)
+			{
+				newbillcredit = null;
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return newbillcredit;
+		}
+
+		#endregion
+
+		#region VAT RATES / CLASSIFICATION
+
+		public static List<Classification> GetClassificationByCompanyID(string companyid, string sessiontoken)
+		{
+			List<Classification> items = new List<Classification>();
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "CLASS";
+				query.query = string.Format("dimension_name=={0}", "*");
+				query.page = 0;
+				query.count = 10000;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					foreach (JToken result in results)
+					{
+						items.Add(result.ToObject<Classification>(JS));
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return items;
+		}
+
+		public static Classification UpdateClassification(ClassificationRoot classificationroot, string sessiontoken)
+		{
+			Classification updatedclassification = null;
+			try
+			{
+				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.ClassificationUrl);
+				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(classificationroot));
+
+				if (json.Length > 0)
+				{
+					updatedclassification = JsonConvert.DeserializeObject<Classification>(json, Settings);
+				}
+			}
+			catch (Exception ex)
+			{
+				updatedclassification = null;
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return updatedclassification;
+		}
+
+		public static Classification CreateClassification(string companyid, ClassificationRoot classificationroot, string sessiontoken)
+		{
+			Classification newclassification = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}", MTSettings.BaseUrl, MTSettings.ClassificationUrl, companyid);
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(classificationroot));
+
+				if (json.Length > 0)
+				{
+					newclassification = JsonConvert.DeserializeObject<Classification>(json, Settings);
+				}
+			}
+			catch (Exception ex)
+			{
+				newclassification = null;
+				Logger.WriteLog(ex);
+				Error(ex.ToString());
+			}
+
+			return newclassification;
 		}
 
 		#endregion
@@ -1204,7 +1445,7 @@ namespace MTLib
 
 		public static string HttpAuthRequest(string url, string method, string username, string password)
 		{
-			if (MTSettings.LogHTTPRequests == true)
+			if (MTApi.EnableHTTPLogging == true)
 			{
 				Logger.WriteLog("############# Start Http Request #############");
 				Logger.WriteLog(string.Format("Url: {0}", url));
@@ -1219,7 +1460,7 @@ namespace MTLib
 				request.Method = method;
 				string header = string.Format("Authorization:MT {0}:{1}", username, password);
 				request.Headers.Add(header);
-				if(MTSettings.LogHTTPRequests == true)
+				if(MTApi.EnableHTTPLogging == true)
 				{
 					Logger.WriteLog(string.Format("Header: {0}", header));
 				}
@@ -1235,7 +1476,7 @@ namespace MTLib
 					token = "";
 				}
 
-				if (MTSettings.LogHTTPRequests == true)
+				if (MTApi.EnableHTTPLogging == true)
 				{
 					Logger.WriteLog(string.Format("Token: {0}", token));
 				}
@@ -1246,7 +1487,7 @@ namespace MTLib
 				Error("HTTPAuth Request Exception: check log for details.");
 			}
 
-			if (MTSettings.LogHTTPRequests == true)
+			if (MTApi.EnableHTTPLogging == true)
 			{
 				Logger.WriteLog("############# End Http Request   #############");
 			}
@@ -1256,7 +1497,7 @@ namespace MTLib
 
 		private static string HTTPRequest(string url, string method, string sessiontoken, string json)
 		{
-			if(MTSettings.LogHTTPRequests == true)
+			if(MTApi.EnableHTTPLogging == true)
 			{
 				Logger.WriteLog("############# Start Http Request #############");
 				Logger.WriteLog(string.Format("Url: {0}", url));
@@ -1297,7 +1538,7 @@ namespace MTLib
 					results = "";
 				}
 
-				if (MTSettings.LogHTTPRequests == true)
+				if (MTApi.EnableHTTPLogging == true)
 				{
 					Logger.WriteLog(string.Format("Response: {0}", results));
 					Logger.WriteLog(string.Format("Status Code: {0}", response.StatusCode));
@@ -1309,7 +1550,7 @@ namespace MTLib
 				Error("HTTPRequest Exception: check log for details.");
 			}
 
-			if (MTSettings.LogHTTPRequests == true)
+			if (MTApi.EnableHTTPLogging == true)
 			{
 				Logger.WriteLog("############# End Http Request   #############");
 			}

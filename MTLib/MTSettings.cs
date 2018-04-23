@@ -22,10 +22,10 @@ namespace MTLib
 			get { return ConfigurationManager.AppSettings["MTPassword"]; }
 		}
 
-		public static bool LogHTTPRequests
-		{
-			get{ return ConfigurationManager.AppSettings["LogHTTPRequests"].ToLower() == "true" ? true : false; }
-		}
+		//public static bool LogHTTPRequests
+		//{
+		//	get{ return ConfigurationManager.AppSettings["LogHTTPRequests"].ToLower() == "true" ? true : false; }
+		//}
 
 		public static string BaseUrl
 		{
@@ -105,6 +105,16 @@ namespace MTLib
 		public static string CreditUrl
 		{
 			get { return ConfigurationManager.AppSettings["CreditUrl"]; }
+		}
+
+		public static string BillCreditUrl
+		{
+			get { return ConfigurationManager.AppSettings["BillCreditUrl"]; }
+		}
+
+		public static string ClassificationUrl
+		{
+			get { return ConfigurationManager.AppSettings["ClassificationUrl"]; }
 		}
 	}
 }

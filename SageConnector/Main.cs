@@ -20,18 +20,37 @@ namespace SageConnector
 {
     public partial class Main : Form
     {
-        public Main()
+		private CancellationTokenSource cts;
+		private bool ContinuousMode = false;
+		private bool SyncRunning = false;
+
+		public Main()
         {
             InitializeComponent();
-			btnSearch.Visible = false;
 			Sync.OnProgress += Sync_OnProgress;
 			Sync.OnComplete += Sync_OnComplete;
+			Sync.OnCancelled += Sync_OnCancelled;
+			SyncTimer.Interval = (SageConnectorSettings.MinsBetweenSync * 60) * 1000;
+			btnStop.Enabled = false;
+			chkHttpLogging.Enabled = true;
 			//FindSage200Assemblies();
+		}
+
+		private void Sync_OnCancelled(object sender, SyncEventArgs e)
+		{
+			Write(e.Message);
+			SyncRunning = false;
 		}
 
 		private void Sync_OnComplete(object sender, SyncEventArgs e)
 		{
 			Write(e.Message);
+			if(ContinuousMode == true)
+			{
+				Write(string.Format("Continuous mode: next sync at: {0}", DateTime.Now.AddMilliseconds(SyncTimer.Interval).ToString("HH:mm:ss")));
+				StartTimer();
+			}
+			SyncRunning = false;
 		}
 
 		private void Sync_OnProgress(object sender, SyncEventArgs e)
@@ -39,14 +58,60 @@ namespace SageConnector
 			Write(e.Message);
 		}
 
-		private async void btnRun_Click(object sender, EventArgs e)
-        {
+		private void btnContinuousSync_Click(object sender, EventArgs e)
+		{
+			ContinuousMode = true;
 			EnableControls(false);
-			CancellationToken token = new CancellationToken();
+			OnSyncTimer_Tick(null, null);
+		}
+
+		private async void OnSyncTimer_Tick(object sender, EventArgs e)
+		{
+			StopTimer();
+
+			SyncRunning = true;
+			cts = new CancellationTokenSource();
 			await Task.Run(() =>
 			{
-				Sync.SyncAll();
-			}, token);
+				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked);
+			});
+		}
+
+		private void btnStop_Click(object sender, EventArgs e)
+		{
+			StopTimer();
+			cts.Cancel();
+			if (SyncRunning == true)
+			{
+				Write("Cancelling Sync, please wait for pending operations to complete...");
+			}
+			else
+			{
+				Write("Sync Cancelled");
+				SyncRunning = false;
+			}
+			EnableControls(true);
+		}
+
+		private async void btnFullSync_Click(object sender, EventArgs e)
+		{
+			EnableControls(false);
+			cts = new CancellationTokenSource();
+			await Task.Run(() =>
+			{
+				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked);
+			});
+			EnableControls(true);
+		}
+
+		private async void btnQuickSync_Click(object sender, EventArgs e)
+		{
+			EnableControls(false);
+			cts = new CancellationTokenSource();
+			await Task.Run(() =>
+			{
+				Sync.SyncAll(cts.Token, false, chkHttpLogging.Checked);
+			});
 			EnableControls(true);
 		}
 
@@ -56,17 +121,18 @@ namespace SageConnector
 			HistoricalInvoices hidlg = new HistoricalInvoices();
 			if(hidlg.ShowDialog() == DialogResult.OK)
 			{
-				string data = Sync.GetHistoricalInvoiceCount(hidlg.SelectedDate);
-				if(MessageBox.Show(string.Format("This will upload the following invoices to Mineral Tree.\r\n{0}\r\nAre you sure you want to continue?", data), "Upload", MessageBoxButtons.YesNo) != DialogResult.Yes)
+				string data = Sync.GetHistoricalInvoiceCount(hidlg.SelectedDate, chkHttpLogging.Checked);
+				if(MessageBox.Show(string.Format("This will upload {0} invoice(s) to APtimise.\r\n\r\nAre you sure you want to continue?", data), "Upload", MessageBoxButtons.YesNo) != DialogResult.Yes)
 				{
 					return;
 				}
 				// RUNS THE HISTORICAL INVOICE SYNC
 				EnableControls(false);
+				btnStop.Enabled = false;
 				CancellationToken token = new CancellationToken();
 				await Task.Run(() =>
 				{
-					Sync.LoadHistoricalInvoices(hidlg.SelectedDate);
+					Sync.LoadHistoricalInvoices(hidlg.SelectedDate, chkHttpLogging.Checked);
 				}, token);
 				EnableControls(true);
 			}
@@ -74,25 +140,6 @@ namespace SageConnector
 			{
 				return;
 			}
-		}
-
-		private void btnSearch_Click(object sender, EventArgs e)
-		{
-			//txtResults.Text = "";
-			//Write("Start Search");
-			//string sessiontoken = MTApi.GetSessionToken();
-			//List<Company> companies = MTApi.GetCompaniesForCurrentUser(sessiontoken);
-			//Company found = companies.Find(o => o.name == "CAPCO Company");
-
-			//List<Bill> bills = MTApi.GetBillsWithNoExternalID(found.id, sessiontoken);
-			//List<Payment> payments = MTApi.GetPayments(found.id, sessiontoken);
-
-			int y = 10;
-			
-
-			//List<VendorRoot> vendors = MTApi.GetVendorByCompanyID(companies[0].id, sessiontoken);
-			//VendorRoot vr = MTApi.GetVendorByExternalID(found.id, "ATL001", sessiontoken);
-			//Write("End Search");
 		}
 
 		delegate void WriteDelegate(string text);
@@ -107,6 +154,34 @@ namespace SageConnector
 			{
 				txtResults.AppendText(text + "\r\n");
 				ActivityLogger.WriteLog(text);
+			}
+		}
+
+		delegate void StartTimerDelegate();
+		private void StartTimer()
+		{
+			if (this.InvokeRequired)
+			{
+				StartTimerDelegate d = new StartTimerDelegate(StartTimer);
+				this.Invoke(d, null);
+			}
+			else
+			{
+				SyncTimer.Start();
+			}
+		}
+
+		delegate void StopTimerDelegate();
+		private void StopTimer()
+		{
+			if (this.InvokeRequired)
+			{
+				StopTimerDelegate d = new StopTimerDelegate(StopTimer);
+				this.Invoke(d, null);
+			}
+			else
+			{
+				SyncTimer.Stop();
 			}
 		}
 
@@ -145,9 +220,22 @@ namespace SageConnector
 		private void EnableControls(bool enable)
 		{
 			btnLoadHistoricalInvoices.Enabled = enable;
-			btnRun.Enabled = enable;
-			btnSearch.Enabled = enable;
+			btnFullSync.Enabled = enable;
+			btnQuickSync.Enabled = enable;
+			btnContinuousSync.Enabled = enable;
+			btnStop.Enabled = !enable;
+			chkHttpLogging.Enabled = enable;
+		}
+
+		private void OnFormLoad(object sender, EventArgs e)
+		{
+			chkHttpLogging.Checked = Properties.Settings.Default.EnableHTTPLogging;
+		}
+
+		private void OnFormClosing(object sender, FormClosingEventArgs e)
+		{
+			Properties.Settings.Default.EnableHTTPLogging = chkHttpLogging.Checked;
+			Properties.Settings.Default.Save();
 		}
 	}
 }
-

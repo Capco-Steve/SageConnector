@@ -10,7 +10,7 @@ namespace MTLib.Objects
 	{
 		public string id { get; set; } = "";
 		public string externalId { get; set; } = "";
-		public Term term { get; set; } = null;
+		public ObjID term { get; set; } = null;
 		public ObjID classification { get; set; } = null;
 		public Department department { get; set; } = null;
 		public Location location { get; set; } = null;
@@ -19,15 +19,17 @@ namespace MTLib.Objects
 		public string transactionDate { get; set; } = null;
 		public string invoiceNumber { get; set; } = null;
 		public Amount amount { get; set; } = null;
+		public Amount netAmount { get; set; } = null;
 		public Amount balance { get; set; } = null;
 		public Amount totalTaxAmount { get; set; } = null;
+		public Amount appliedPaymentAmount { get; set; } = null;
 		public string memo { get; set; } = null;
 		public string poNumber { get; set; } = null;
 		public string state { get; set; } = null;
-		public string status { get; set; } = null;
+		//public string status { get; set; } = null;
 		public ObjID vendor { get; set; } = null;
 		public List<Expenses> expenses { get; set; } = null;
-		public List<Item> items { get; set; } = null;
+		public List<CompanyItem> items { get; set; } = null;
 	}
 
 }

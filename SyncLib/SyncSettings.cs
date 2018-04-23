@@ -13,17 +13,17 @@ namespace SyncLib
 	/// </summary>
 	public static class SyncSettings
 	{
-		public static string MTCompanyNameToSync
-		{
-			get { return ConfigurationManager.AppSettings["MTCompanyNameToSync"]; }
-		}
-
-		public static SageElementCollection SageCompaniesToSync
+		public static string SageCompanyNameToSync
 		{
 			get
 			{
-				return (ConfigurationManager.GetSection("SageCompanyConfig") as SageCompanyConfigSection).SageCompanies;
+				return ConfigurationManager.AppSettings["SageCompanyNameToSync"];
 			}
+		}
+
+		public static string MTCompanyNameToSync
+		{
+			get { return ConfigurationManager.AppSettings["MTCompanyNameToSync"]; }
 		}
 
 		public static string ActivityLogFileDirectory

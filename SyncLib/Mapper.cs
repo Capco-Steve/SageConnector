@@ -15,6 +15,9 @@ using SageCostCentre = Sage.Accounting.SystemManager.CostCentre;
 using Bank = Sage.Accounting.CashBook.Bank;
 using POPOrder = Sage.Accounting.POP.POPOrder;
 using PostedPurchaseAccountEntry = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry;
+using TaxCode = Sage.Accounting.TaxModule.TaxCode;
+using TaxAnalysisItem = Sage.Accounting.TradeLedger.TaxAnalysisItem;
+using NominalAnalysisItem = Sage.Accounting.TradeLedger.NominalAnalysisItem;
 using Utils;
 
 namespace SyncLib
@@ -26,17 +29,16 @@ namespace SyncLib
 	{
 		#region VENDOR
 
-		public static VendorRoot SageSupplierToMTVendor(SageSupplier supplier, string prefix)
+		public static VendorRoot SageSupplierToMTVendor(SageSupplier supplier)
 		{
 			VendorRoot vendorroot = new VendorRoot();
 			Vendor vendor = new Vendor();
 
-
 			vendor.id = "";
-			vendor.externalId = ExternalIDFormatter.AppendPrefix(supplier.PrimaryKey.DbValue.ToString(), prefix);
+			vendor.externalId = supplier.PrimaryKey.DbValue.ToString();
 			vendor.form1099Enabled = false;
 			vendor.name = supplier.Name;
-			vendor.active = true; // NO MATCHING FIELD IN SAGE - CLOSEST IS ON HOLD???
+			vendor.active = !supplier.OnHold;
 
 			vendor.address = new Address
 			{
@@ -86,7 +88,7 @@ namespace SyncLib
 			vendor.vatNumber = supplier.TaxRegistrationCode;
 			
 			/*
-			VENDOR COMPANY DEFAULT IS NOT CURRENTLY SUPPORTED BUT MT - EVEN THOUGH ITS IN THE DOCUMENTATION!!!!
+			VENDOR COMPANY DEFAULT IS NOT CURRENTLY SUPPORTED BY MT - EVEN THOUGH ITS IN THE DOCUMENTATION!!!!
 
 			vendor.vendorCompanyDefault = new VendorCompanyDefault()
 			{
@@ -108,13 +110,13 @@ namespace SyncLib
 
 		#region DEPARTMENT
 
-		public static DepartmentRoot SageDepartmentToMTDepartment(SageDepartment sagedepartment, string prefix)
+		public static DepartmentRoot SageDepartmentToMTDepartment(SageDepartment sagedepartment)
 		{
 			DepartmentRoot departmentroot = new DepartmentRoot();
 			Department department = new Department();
 
 			department.id = "";
-			department.externalId = ExternalIDFormatter.AppendPrefix(sagedepartment.PrimaryKey.DbValue.ToString(), prefix);
+			department.externalId = sagedepartment.PrimaryKey.DbValue.ToString();
 			department.name = sagedepartment.Name;
 			department.active = true; // NO MATCHING FIELD IN SAGE
 
@@ -126,7 +128,7 @@ namespace SyncLib
 
 		#region STOCKITEM / ITEM
 
-		public static ItemRoot SageStockItemToMTItem(SageStockItem sagestockitem, string prefix)
+		public static ItemRoot SageStockItemToMTItem(SageStockItem sagestockitem)
 		{
 			ItemRoot itemroot = new ItemRoot();
 			Item item = new Item();
@@ -134,7 +136,7 @@ namespace SyncLib
 			item.id = "";
 			item.active = sagestockitem.StockItemStatus == Sage.Accounting.Stock.StockItemStatusEnum.EnumStockItemStatusTypeActive ? true : false;
 			
-			item.externalId = ExternalIDFormatter.AppendPrefix(sagestockitem.PrimaryKey.DbValue.ToString(), prefix);
+			item.externalId = sagestockitem.PrimaryKey.DbValue.ToString();
 			item.name = sagestockitem.Name;
 			item.type = "INVENTORY"; // ???
  
@@ -159,13 +161,13 @@ namespace SyncLib
 
 		#region NOMINAL CODE / GL CODE
 
-		public static GlAccountRoot SageNominalCodeToMTGlAccount(SageNominalCode sagenominalcode, string prefix)
+		public static GlAccountRoot SageNominalCodeToMTGlAccount(SageNominalCode sagenominalcode)
 		{
 			GlAccountRoot glaccountroot = new GlAccountRoot();
 			GlAccount glaccount = new GlAccount();
 
 			glaccount.id = "";
-			glaccount.externalId = ExternalIDFormatter.AppendPrefix(sagenominalcode.PrimaryKey.DbValue.ToString(), prefix);
+			glaccount.externalId = sagenominalcode.PrimaryKey.DbValue.ToString();
 			glaccount.subsidiaries = null;
 			glaccount.departmentRequired = false;
 			glaccount.locationRequired = false;
@@ -188,13 +190,13 @@ namespace SyncLib
 
 		#region COST CENTRE / LOCATION
 
-		public static LocationRoot SageCostCentreToMTLocation(SageCostCentre sagecostcentre, string prefix)
+		public static LocationRoot SageCostCentreToMTLocation(SageCostCentre sagecostcentre)
 		{
 			LocationRoot locationroot = new LocationRoot();
 			Location location = new Location();
 
 			location.id = "";
-			location.externalId = ExternalIDFormatter.AppendPrefix(sagecostcentre.PrimaryKey.DbValue.ToString(), prefix);
+			location.externalId = sagecostcentre.PrimaryKey.DbValue.ToString();
 			location.subsidiaries = null;
 			location.name = sagecostcentre.Name;
 			location.active = true; // NO MATCHING FIELD IN SAGE
@@ -207,7 +209,7 @@ namespace SyncLib
 
 		#region PAYMENT TERMS
 
-		public static TermRoot SagePaymentTermsToMTTerms(Tuple<decimal, int, int> terms, string prefix)
+		public static TermRoot SagePaymentTermsToMTTerms(Tuple<decimal, int, int> terms)
 		{
 			TermRoot termroot = new TermRoot();
 			Term term = new Term();
@@ -217,7 +219,7 @@ namespace SyncLib
 			term.discountPercent = terms.Item1;
 			term.discountDays = terms.Item2;
 			term.dueDays = terms.Item3;
-			term.externalId = ExternalIDFormatter.AppendPrefix(string.Format("{0}-{1}-{2}", terms.Item1, terms.Item2, terms.Item3), prefix);
+			term.externalId = string.Format("{0}-{1}-{2}", terms.Item1, terms.Item2, terms.Item3);
 			term.name = string.Format("Due Days: {0}", terms.Item3);
 			term.active = true;
 
@@ -229,15 +231,15 @@ namespace SyncLib
 
 		#region BANK ACCOUNT / PAYMENT METHOD
 
-		public static PaymentMethodRoot SageBankAccountToMTPaymentMethod(Bank bank, string prefix)
+		public static PaymentMethodRoot SageBankAccountToMTPaymentMethod(Bank bank)
 		{
 			PaymentMethodRoot methodroot = new PaymentMethodRoot();
 			PaymentMethod method = new PaymentMethod();
 
 			method.id = "";
 			method.type = "ACH";
-			method.externalId = ExternalIDFormatter.AppendPrefix(bank.PrimaryKey.DbValue.ToString(), prefix);
-			method.active = true; // NO MATCHING FIELD IN SAGEs
+			method.externalId = bank.PrimaryKey.DbValue.ToString();
+			method.active = true; // NO MATCHING FIELD IN SAGE
 
 			BankAccount bankaccount = new BankAccount()
 			{
@@ -262,16 +264,16 @@ namespace SyncLib
 
 		#region PURCHASE ORDER
 
-		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder, string prefix)
+		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder)
 		{
 			PurchaseOrderRoot purchaseorderroot = new PurchaseOrderRoot();
 			PurchaseOrder purchaseorder = new PurchaseOrder();
 
 			purchaseorder.id = "";
-			purchaseorder.externalId = ExternalIDFormatter.AppendPrefix(poporder.PrimaryKey.DbValue.ToString(), prefix);
+			purchaseorder.externalId = poporder.PrimaryKey.DbValue.ToString();
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(poporder.Supplier.PrimaryKey.DbValue.ToString(), prefix));
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(poporder.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			purchaseorder.vendor = new ObjID() { id = vendor.id };
 
@@ -293,7 +295,7 @@ namespace SyncLib
 				SageStockItem ssi = SageApi.GetStockItemByCode(line.ItemCode);
 				if (ssi != null)
 				{
-					Item mtitem = MTReferenceData.FindItemByExternalID(ExternalIDFormatter.AppendPrefix(ssi.PrimaryKey.DbValue.ToString(), prefix));
+					Item mtitem = MTReferenceData.FindItemByExternalID(ssi.PrimaryKey.DbValue.ToString());
 					if (mtitem != null)
 					{
 						item.companyItem = new ObjID() { id = mtitem.id };
@@ -309,13 +311,13 @@ namespace SyncLib
 				item.cost = new Cost()
 				{
 					amount = PriceConverter.FromDecimal(line.UnitBuyingPrice, 2),
-					precision = 0
+					precision = 2
 				};
 
 				item.amountDue = new Amount()
 				{
 					amount = PriceConverter.FromDecimal(line.LineTotalValue, 2),
-					precision = 0
+					precision = 2
 				};
 
 				item.lineNumber = linenumber; // no value in sage
@@ -337,29 +339,73 @@ namespace SyncLib
 
 		#region INVOICE/BILL
 
-		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice, string prefix)
+		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice)
 		{
 			BillRoot billroot = new BillRoot();
 			Bill bill = new Bill();
 
 			bill.id = "";
-			bill.externalId = ExternalIDFormatter.AppendPrefix(invoice.PrimaryKey.DbValue.ToString(), prefix);
-			// term, classification, etc
+			bill.externalId = invoice.PrimaryKey.DbValue.ToString();
 			
 			bill.dueDate = invoice.DueDate.ToString("yyyy-MM-dd");
 			bill.transactionDate = invoice.InstrumentDate.ToString("yyyy-MM-dd"); //??
-			bill.invoiceNumber = invoice.InstrumentNo;
+			bill.invoiceNumber = invoice.InstrumentNo; // THIS IS REFERENCE IN SAGE UI (INVOICE SCREEN)
+
 			bill.amount = new Amount()
 			{
-				amount = PriceConverter.FromDecimal(invoice.CoreDocumentNetValue, 2),
+				amount = PriceConverter.FromDecimal(invoice.CoreDocumentGrossValue, 2),
 				precision = 2
 			};
+
 			bill.balance = new Amount() { amount = 0 }; // ???
+
 			bill.totalTaxAmount = new Amount()
 			{
 				amount = PriceConverter.FromDecimal(invoice.CoreDocumentTaxValue, 2),
 				precision = 2
 			};
+
+			// NOT POSSIBLE TO ADD LINE ITEMS BECAUSE SAGE SPLITS TRANSACTIONS INTO 2, VAT AND GLCODE/GOODSAMOUNT AND THEY ARE NOT RELATED
+			// NOMINAL ANALYSIS
+			/*
+			bill.items = new List<CompanyItem>();
+			
+			int count = invoice.TradingTransactionDrillDown.NominalEntries.Count();
+			foreach (Sage.Accounting.NominalLedger.NominalAccountEntryView view in invoice.TradingTransactionDrillDown.NominalEntries)
+			{
+				CompanyItem ci = new CompanyItem();
+				ci.glAccount = MTReferenceData.FindGlAccountByAccountNumber(view.AccountNumber);
+				ci.netAmount = new Amount() { amount = PriceConverter.FromDecimal(view.GoodsValueInBaseCurrency, 2), precision = 2 };
+				ci.taxAmount = new Amount() { amount = 0, precision = 2 };
+
+				bill.items.Add(ci);
+
+				// CREATE THE NOMINAL ANALYSIS
+				
+				//NominalCode nominalcode = SageApi.GetNominalCodeByPrimaryKey(lineitem.GLAccountID);
+				//nominal.NominalSpecification = nominalcode.NominalSpecification;
+				//nominal.Narrative = lineitem.Description;
+				//nominal.Amount = lineitem.NetAmount;
+
+				// CREATE THE VAT ANALYSIS
+				//TaxCode taxcode = SageApi.GetVatRateByPrimaryKey(lineitem.ClassificationID);
+				//tax.TaxCode = taxcode;
+				//tax.Goods = lineitem.NetAmount;
+				//tax.TaxAmount = lineitem.TaxAmount;	
+			}
+			
+			// TAX/VAT ANALYSIS
+			/*
+			foreach (Sage.Accounting.TaxModule.Views.TaxAccountEntryView view in invoice.TradingTransactionDrillDown.TaxEntries)
+			{
+				CompanyItem ci = new CompanyItem();
+				//view.GoodsAmount;
+				//view.TaxAmount;
+				//view.TaxRate;
+				//view.
+			}
+			//
+			*/
 			if (invoice.MemoNotes.Count > 0)
 				bill.memo = invoice.MemoNotes[0].Note; // JUST USE THE FIRST MEMO
 			else
@@ -368,7 +414,7 @@ namespace SyncLib
 			bill.state = EnumMapper.SageDocumentStatusEnumToMTState(invoice.DocumentStatus);
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(invoice.Supplier.PrimaryKey.DbValue.ToString(), prefix));
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(invoice.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			bill.vendor = new ObjID() { id = vendor.id };
 
@@ -383,18 +429,18 @@ namespace SyncLib
 
 		#region CREDIT NOTES
 
-		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote, string prefix)
+		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote)
 		{
 			CreditRoot creditroot = new CreditRoot();
 			Credit credit = new Credit();
 
 			credit.id = "";
-			credit.externalId = ExternalIDFormatter.AppendPrefix(creditnote.PrimaryKey.DbValue.ToString(), prefix);
+			credit.externalId = creditnote.PrimaryKey.DbValue.ToString();
 			credit.creditNumber = creditnote.InstrumentNo;
 			credit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd");
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(ExternalIDFormatter.AppendPrefix(creditnote.Supplier.PrimaryKey.DbValue.ToString(), prefix));
+			Vendor vendor = MTReferenceData.FindVendorByExternalID(creditnote.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			credit.vendor = new ObjID() { id = vendor.id };
 
@@ -415,5 +461,24 @@ namespace SyncLib
 
 		#endregion
 
+		#region CLASSIFICATION / VAT RATE
+
+		public static ClassificationRoot SageTaxCodeToMTClassification(TaxCode taxcode)
+		{
+			ClassificationRoot classificationroot = new ClassificationRoot();
+			Classification classification = new Classification();
+
+			classification.id = "";
+			classification.externalId = taxcode.PrimaryKey.DbValue.ToString();
+
+			classification.name = string.Format("{0}-{1} ({2})", taxcode.Code, taxcode.Name, taxcode.TaxRate);
+
+			classification.active = true;
+
+			classificationroot.classification = classification;
+			return classificationroot;
+		}
+
+		#endregion
 	}
 }
