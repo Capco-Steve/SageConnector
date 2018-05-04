@@ -21,7 +21,7 @@ using TaxCode = Sage.Accounting.TaxModule.TaxCode;
 
 namespace SageLib
 {
-    public static class SageApi
+    public static class Sage200Api
     {
         private static Application application = null;
 
@@ -67,6 +67,23 @@ namespace SageLib
 			return list;
         }
 
+		public static List<Supplier> GetSuppliersModifiedAfter(DateTime dt)
+		{
+			List<Supplier> list = new List<Supplier>();
+			if (application != null)
+			{
+				Sage.Accounting.PurchaseLedger.Suppliers suppliers = Sage.Accounting.PurchaseLedger.SuppliersFactory.Factory.CreateNew();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.Supplier.FIELD_DATETIMEUPDATED, FilterOperator.GreaterThanOrEqual, dt);
+				query.Filters.Add(filter);
+
+				suppliers.Find(query);
+
+				list = suppliers.GetList().Cast<Supplier>().ToList();
+			}
+			return list;
+		}
+
 		public static Supplier GetSupplierByPrimaryKey(string key)
 		{
 			Supplier supplier = null;
@@ -89,6 +106,23 @@ namespace SageLib
 			if (application != null)
 			{
 				Sage.Accounting.CashBook.Banks banks = Sage.Accounting.CashBook.BanksFactory.Factory.CreateNew();
+				list = banks.GetList().Cast<Bank>().ToList();
+			}
+			return list;
+		}
+
+		public static List<Bank> GetBanksModifiedAfter(DateTime dt)
+		{
+			List<Bank> list = null;
+			if (application != null)
+			{
+				Sage.Accounting.CashBook.Banks banks = Sage.Accounting.CashBook.BanksFactory.Factory.CreateNew();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.CashBook.Bank.FIELD_DATETIMEUPDATED, FilterOperator.GreaterThanOrEqual, dt);
+				query.Filters.Add(filter);
+
+				banks.Find(query);
+
 				list = banks.GetList().Cast<Bank>().ToList();
 			}
 			return list;
@@ -121,6 +155,25 @@ namespace SageLib
 			return list;
 		}
 
+		public static List<Department> GetDepartmentsModifiedAfter(DateTime dt)
+		{
+			List<Department> list = new List<Department>();
+			if (application != null)
+			{
+				Sage.Accounting.SystemManager.Departments departments = Sage.Accounting.SystemManager.DepartmentsFactory.Factory.CreateNew();
+				List<Department> temp = departments.GetList().Cast<Department>().ToList();
+
+				foreach(Department department in temp)
+				{
+					if(department.DateTimeUpdated > dt)
+					{
+						list.Add(department);
+					}
+				}
+			}
+			return list;
+		}
+
 		public static Department GetDepartmentByPrimaryKey(string key)
 		{
 			Department department = null;
@@ -142,6 +195,23 @@ namespace SageLib
 			if (application != null)
 			{
 				Sage.Accounting.Stock.StockItems stockitems = new Sage.Accounting.Stock.StockItems();
+				list = stockitems.GetList().Cast<StockItem>().ToList();
+			}
+			return list;
+		}
+
+		public static List<StockItem> GetStockItemsModifiedAfter(DateTime dt)
+		{
+			List<StockItem> list = null;
+			if (application != null)
+			{
+				Sage.Accounting.Stock.StockItems stockitems = new Sage.Accounting.Stock.StockItems();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.Stock.StockItem.FIELD_DATETIMEUPDATED, FilterOperator.GreaterThanOrEqual, dt);
+				query.Filters.Add(filter);
+
+				stockitems.Find(query);
+
 				list = stockitems.GetList().Cast<StockItem>().ToList();
 			}
 			return list;
@@ -170,6 +240,27 @@ namespace SageLib
 			{
 				Sage.Accounting.NominalLedger.NominalCodes codes = Sage.Accounting.NominalLedger.NominalCodesFactory.Factory.CreateNew();
 				list = codes.GetList().Cast<NominalCode>().ToList();
+			}
+
+			return list;
+		}
+
+		public static List<NominalCode> GetNominalCodesModifiedAfter(DateTime dt)
+		{
+			List<NominalCode> list = new List<NominalCode>();
+			if (application != null)
+			{
+				Sage.Accounting.NominalLedger.NominalCodes codes = Sage.Accounting.NominalLedger.NominalCodesFactory.Factory.CreateNew();
+				List<NominalCode> temp = codes.GetList().Cast<NominalCode>().ToList();
+
+				foreach(NominalCode code in temp)
+				{
+					if(code.DateTimeUpdated > dt)
+					{
+						list.Add(code);
+					}
+				}
+
 			}
 
 			return list;
@@ -210,6 +301,26 @@ namespace SageLib
 			{
 				Sage.Accounting.SystemManager.CostCentres costcentres = Sage.Accounting.SystemManager.CostCentresFactory.Factory.CreateNew();
 				list = costcentres.GetList().Cast<CostCentre>().ToList();
+			}
+
+			return list;
+		}
+
+		public static List<CostCentre> GetCostCentresModifiedAfter(DateTime dt)
+		{
+			List<CostCentre> list = new List<CostCentre>();
+			if (application != null)
+			{
+				Sage.Accounting.SystemManager.CostCentres costcentres = Sage.Accounting.SystemManager.CostCentresFactory.Factory.CreateNew();
+				List<CostCentre> temp = costcentres.GetList().Cast<CostCentre>().ToList();
+
+				foreach(CostCentre costcentre in temp)
+				{
+					if(costcentre.DateTimeUpdated > dt)
+					{
+						list.Add(costcentre);
+					}
+				}
 			}
 
 			return list;
@@ -380,6 +491,33 @@ namespace SageLib
 			return result;
 		}
 
+		public static Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry GetInvoiceByInvoiceNumberAndSupplierPrimaryKey(string id, string invoicenumber)
+		{
+			Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry result = null;
+			if (application != null)
+			{
+				// PURCHASE INVOICES
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
+				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+
+				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
+				query.Filters.Add(filter);
+
+				Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTNO, invoicenumber);
+				query.Filters.Add(filter1);
+
+				Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
+				Sage.ObjectStore.Filter filter2 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_SUPPLIERACCOUNTDBKEY, key);
+				query.Filters.Add(filter2);
+
+				invoices.Find(query);
+
+				result = invoices.First;
+			}
+
+			return result;
+		}
+
 		public static string CreateInvoice(string supplierid, string invoicenumber, string invoicedate, decimal amount, decimal taxamount, List<LineItem> lineitems)
 		{
 			string newid = "";
@@ -388,7 +526,7 @@ namespace SageLib
 				Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrument invoice = Sage.Accounting.PurchaseLedger.PurchaseInvoiceInstrumentFactory.Factory.CreateNew();
 
 				invoice.SuppressExceedsCreditLimitException = true;
-				invoice.Supplier = SageApi.GetSupplierByPrimaryKey(supplierid);
+				invoice.Supplier = Sage200Api.GetSupplierByPrimaryKey(supplierid);
 				invoice.InstrumentNo = invoicenumber;
 
 				invoice.InstrumentDate = DateTime.ParseExact(invoicedate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
@@ -417,13 +555,13 @@ namespace SageLib
 					}
 
 					// CREATE THE NOMINAL ANALYSIS
-					NominalCode nominalcode = SageApi.GetNominalCodeByPrimaryKey(lineitem.GLAccountID);
+					NominalCode nominalcode = Sage200Api.GetNominalCodeByPrimaryKey(lineitem.GLAccountID);
 					nominal.NominalSpecification = nominalcode.NominalSpecification;
 					nominal.Narrative = lineitem.Description;
 					nominal.Amount = lineitem.NetAmount;
 
 					// CREATE THE VAT ANALYSIS
-					TaxCode taxcode = SageApi.GetVatRateByPrimaryKey(lineitem.ClassificationID);
+					TaxCode taxcode = Sage200Api.GetVatRateByPrimaryKey(lineitem.ClassificationID);
 					tax.TaxCode = taxcode;
 					tax.Goods = lineitem.NetAmount;
 					tax.TaxAmount = lineitem.TaxAmount;
@@ -449,7 +587,7 @@ namespace SageLib
 			bool result = true;
 			try
 			{
-				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = SageApi.GetInvoiceByPrimaryKey(invoiceid);
+				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry invoice = Sage200Api.GetInvoiceByPrimaryKey(invoiceid);
 
 				// THESE ARE THE ONLY WRITABLE FIELDS
 				invoice.InstrumentNo = newinvoicenumber;
@@ -477,7 +615,7 @@ namespace SageLib
 
 		#region PAYMENTS
 
-		public static string CreatePayment(Supplier supplier, string bankid, string paymentdate, decimal amount, decimal taxamount)
+		public static string CreatePayment(Supplier supplier, string bankid, string paymentdate, decimal netamount, decimal taxamount)
 		{
 			string newid = "";
 			try
@@ -488,7 +626,7 @@ namespace SageLib
 					payment.SuppressExceedsCreditLimitException = true;
 
 					// SET THE BANK
-					payment.Bank = SageApi.GetBankByPrimaryKey(bankid);
+					payment.Bank = Sage200Api.GetBankByPrimaryKey(bankid);
 
 					// SET THE SUPPLIER
 					payment.Supplier = supplier;
@@ -497,7 +635,7 @@ namespace SageLib
 					payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);
 
 					// SET THE AMOUNTS
-					payment.NetValue = amount;
+					payment.NetValue = netamount;
 					payment.TaxValue = taxamount;
 
 					payment.Validate();
@@ -547,7 +685,13 @@ namespace SageLib
 
 				creditnotes.Find(query);
 
-				list = creditnotes.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList();
+				foreach(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry entry in creditnotes.GetList().Cast<Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry>().ToList())
+				{
+					if(entry.DocumentStatus == Sage.Accounting.AllocationStatusEnum.DocumentStatusBlank && entry.SecondReferenceNo.Length > 0)
+					{
+						list.Add(entry);
+					}
+				}
 			}
 
 			return list;
@@ -564,6 +708,26 @@ namespace SageLib
 			{
 				Sage.Accounting.TaxModule.TaxCodes codes = Sage.Accounting.TaxModule.TaxCodesFactory.Factory.CreateNew();
 				list = codes.GetList().Cast<Sage.Accounting.TaxModule.TaxCode>().ToList();
+			}
+
+			return list;
+		}
+
+		public static List<TaxCode> GetVatRatesModifiedAfter(DateTime dt)
+		{
+			List<TaxCode> list = new List<TaxCode>();
+			if (application != null)
+			{
+				Sage.Accounting.TaxModule.TaxCodes codes = Sage.Accounting.TaxModule.TaxCodesFactory.Factory.CreateNew();
+				List<TaxCode> temp = codes.GetList().Cast<Sage.Accounting.TaxModule.TaxCode>().ToList();
+
+				foreach (TaxCode code in temp)
+				{
+					if(code.DateTimeUpdated > dt)
+					{
+						list.Add(code);
+					}
+				}
 			}
 
 			return list;

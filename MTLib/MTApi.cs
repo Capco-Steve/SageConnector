@@ -36,7 +36,7 @@ namespace MTLib
             {
 				token = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
             return token;
@@ -75,7 +75,7 @@ namespace MTLib
 			{
 				user = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return user;
@@ -99,7 +99,7 @@ namespace MTLib
 			{
 				companies = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return companies;
@@ -109,9 +109,9 @@ namespace MTLib
 
 		#region VENDOR
 
-		public static VendorRoot GetVendorByExternalID(string companyid, string externalid, string sessiontoken)
+		public static Vendor GetVendorByExternalID(string companyid, string sessiontoken, string externalid)
 		{
-			VendorRoot vendorroot = null;
+			Vendor vendor = null;
 			try
 			{
 				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
@@ -133,19 +133,18 @@ namespace MTLib
 
 					if(results.Count() == 1)
 					{
-						vendorroot = new VendorRoot();
-						vendorroot.vendor = results[0].ToObject<Vendor>();
+						vendor = results[0].ToObject<Vendor>();
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				vendorroot = null;
+				vendor = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
-			return vendorroot;
+			return vendor;
 		}
 
 		public static List<Vendor> GetVendorsByCompanyID(string companyid, string sessiontoken)
@@ -179,7 +178,7 @@ namespace MTLib
 			catch(Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return vendors;
@@ -218,7 +217,7 @@ namespace MTLib
 			{
 				vendorroot = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return vendorroot;
@@ -241,7 +240,7 @@ namespace MTLib
 			{
 				updatedvendor = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedvendor;
@@ -264,7 +263,7 @@ namespace MTLib
 			{
 				newvendor = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newvendor;
@@ -305,10 +304,47 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return departments;
+		}
+
+		public static Department GetDepartmentByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Department department = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "DEPARTMENT";
+				query.query = string.Format("dimension_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						department = results[0].ToObject<Department>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return department;
 		}
 
 		public static Department UpdateDepartment(DepartmentRoot departmentroot, string sessiontoken)
@@ -328,7 +364,7 @@ namespace MTLib
 			{
 				updateddepartment = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updateddepartment;
@@ -351,7 +387,7 @@ namespace MTLib
 			{
 				newdepartment = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newdepartment;
@@ -392,7 +428,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return item;
@@ -430,7 +466,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return item;
@@ -467,7 +503,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return items;
@@ -490,7 +526,7 @@ namespace MTLib
 			{
 				updateditem = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updateditem;
@@ -513,7 +549,7 @@ namespace MTLib
 			{
 				newitem = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newitem;
@@ -554,10 +590,47 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return glaccounts;
+		}
+
+		public static GlAccount GetGlAccountByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			GlAccount glaccount = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "GLACCOUNT";
+				query.query = string.Format("gl_account_number_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						glaccount = results[0].ToObject<GlAccount>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return glaccount;
 		}
 
 		public static GlAccount UpdateGlAccount(GlAccountRoot glaccountroot, string sessiontoken)
@@ -577,7 +650,7 @@ namespace MTLib
 			{
 				updatedglaccount = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedglaccount;
@@ -600,7 +673,7 @@ namespace MTLib
 			{
 				newglaccount = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newglaccount;
@@ -641,10 +714,47 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return locations;
+		}
+
+		public static Location GetLocationByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Location location = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "LOCATION";
+				query.query = string.Format("dimension_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						location = results[0].ToObject<Location>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return location;
 		}
 
 		public static Location UpdateLocation(LocationRoot locationroot, string sessiontoken)
@@ -664,7 +774,7 @@ namespace MTLib
 			{
 				updatedlocation = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedlocation;
@@ -687,7 +797,7 @@ namespace MTLib
 			{
 				newlocation = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newlocation;
@@ -714,7 +824,7 @@ namespace MTLib
 			{
 				newterm = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newterm;
@@ -741,7 +851,7 @@ namespace MTLib
 			{
 				newpaymentmethod = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newpaymentmethod;
@@ -764,7 +874,7 @@ namespace MTLib
 			{
 				updatedpaymentmethod = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedpaymentmethod;
@@ -784,6 +894,23 @@ namespace MTLib
 			}
 
 			return paymentmethods;
+		}
+
+		public static PaymentMethod GetPaymentMethodByExternalID(string companyname, string sessiontoken, string externalid)
+		{
+			// PAYMENT METHOD ISN'T SUPPORTED BY SEARCH SO WE HAVE TO QUERY THE COMPANY OBJECT AND GET THE PAYMENT METHODS FROM THAT 
+			List<PaymentMethod> paymentmethods = MTApi.GetPaymentMethodsByCompanyName(companyname, sessiontoken);
+
+			foreach(PaymentMethod p in paymentmethods)
+			{
+				if(p.externalId == externalid)
+				{
+					return p;
+				}
+			}
+
+
+			return null;
 		}
 
 		#endregion
@@ -843,7 +970,7 @@ namespace MTLib
 			{
 				updatedpurchaseorder = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedpurchaseorder;
@@ -866,7 +993,7 @@ namespace MTLib
 			{
 				newpurchaseorder = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newpurchaseorder;
@@ -900,7 +1027,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return order;
@@ -937,7 +1064,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return orders;
@@ -978,7 +1105,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return bills;
@@ -1015,7 +1142,44 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return bill;
+		}
+
+		public static Bill GetBillByInvoiceNumber(string companyid, string sessiontoken, string invoicenumber)
+		{
+			Bill bill = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "BILL";
+				query.query = string.Format("bill_invoiceNumber=={0}", invoicenumber);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query, Settings));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						bill = results[0].ToObject<Bill>(JS);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return bill;
@@ -1045,7 +1209,7 @@ namespace MTLib
 			return bill;
 		}
 		*/
-		
+
 		public static Bill GetBillByID(string companyid, string sessiontoken, string id)
 		{
 			Bill bill = null;
@@ -1078,7 +1242,7 @@ namespace MTLib
 			{
 				bill = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return bill;
@@ -1115,7 +1279,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return bills;
@@ -1138,7 +1302,7 @@ namespace MTLib
 			{
 				updatedbill = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedbill;
@@ -1161,7 +1325,7 @@ namespace MTLib
 			{
 				newbill = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newbill;
@@ -1212,7 +1376,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return payments;
@@ -1235,7 +1399,7 @@ namespace MTLib
 			{
 				updatedpayment = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedpayment;
@@ -1273,7 +1437,7 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return credit;
@@ -1296,7 +1460,7 @@ namespace MTLib
 			{
 				updatedcredit = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedcredit;
@@ -1319,7 +1483,7 @@ namespace MTLib
 			{
 				newcredit = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newcredit;
@@ -1346,7 +1510,7 @@ namespace MTLib
 			{
 				newbillcredit = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newbillcredit;
@@ -1387,10 +1551,47 @@ namespace MTLib
 			catch (Exception ex)
 			{
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return items;
+		}
+
+		public static Classification GetClassificationByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Classification item = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "CLASS";
+				query.query = string.Format("dimension_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						item = results[0].ToObject<Classification>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return item;
 		}
 
 		public static Classification UpdateClassification(ClassificationRoot classificationroot, string sessiontoken)
@@ -1410,7 +1611,7 @@ namespace MTLib
 			{
 				updatedclassification = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return updatedclassification;
@@ -1433,7 +1634,7 @@ namespace MTLib
 			{
 				newclassification = null;
 				Logger.WriteLog(ex);
-				Error(ex.ToString());
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
 			}
 
 			return newclassification;
@@ -1483,7 +1684,8 @@ namespace MTLib
 			}
 			catch (Exception ex)
 			{
-				Logger.WriteLog(ex);
+				if(MTApi.EnableHTTPLogging)
+					Logger.WriteLog(ex);
 				Error("HTTPAuth Request Exception: check log for details.");
 			}
 
@@ -1546,7 +1748,8 @@ namespace MTLib
 			}
 			catch (Exception ex)
 			{
-				Logger.WriteLog(ex);
+				if (MTApi.EnableHTTPLogging)
+					Logger.WriteLog(ex);
 				Error("HTTPRequest Exception: check log for details.");
 			}
 

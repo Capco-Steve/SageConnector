@@ -15,6 +15,7 @@ using SyncLib;
 using Utils;
 using Newtonsoft.Json;
 using Microsoft.Win32;
+using System.IO;
 
 namespace SageConnector
 {
@@ -30,10 +31,16 @@ namespace SageConnector
 			Sync.OnProgress += Sync_OnProgress;
 			Sync.OnComplete += Sync_OnComplete;
 			Sync.OnCancelled += Sync_OnCancelled;
+			Sync.OnError += Sync_OnError;
 			SyncTimer.Interval = (SageConnectorSettings.MinsBetweenSync * 60) * 1000;
 			btnStop.Enabled = false;
 			chkHttpLogging.Enabled = true;
 			//FindSage200Assemblies();
+		}
+
+		private void Sync_OnError(object sender, SyncEventArgs e)
+		{
+			Write(e.Message);
 		}
 
 		private void Sync_OnCancelled(object sender, SyncEventArgs e)
@@ -51,6 +58,7 @@ namespace SageConnector
 				StartTimer();
 			}
 			SyncRunning = false;
+			SaveLastSyncTime();
 		}
 
 		private void Sync_OnProgress(object sender, SyncEventArgs e)
@@ -68,12 +76,12 @@ namespace SageConnector
 		private async void OnSyncTimer_Tick(object sender, EventArgs e)
 		{
 			StopTimer();
-
+			DateTime? lastsynctime = GetLastSyncTime();
 			SyncRunning = true;
 			cts = new CancellationTokenSource();
 			await Task.Run(() =>
 			{
-				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked);
+				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked, lastsynctime);
 			});
 		}
 
@@ -95,23 +103,31 @@ namespace SageConnector
 
 		private async void btnFullSync_Click(object sender, EventArgs e)
 		{
+			//DateTime? dt = new DateTime(2018, 4, 30, 16, 20, 0);
+			//List<SageLib.Objects.Supplier> list = SageLib.Sage50.Sage50Api.GetSuppliers(null);
+			//return;
+			//
 			EnableControls(false);
+			DateTime? lastsynctime = GetLastSyncTime();
 			cts = new CancellationTokenSource();
 			await Task.Run(() =>
 			{
-				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked);
+				Sync.SyncAll(cts.Token, true, chkHttpLogging.Checked, lastsynctime);
 			});
+			SaveLastSyncTime();
 			EnableControls(true);
 		}
 
 		private async void btnQuickSync_Click(object sender, EventArgs e)
 		{
 			EnableControls(false);
+			DateTime? lastsynctime = GetLastSyncTime();
 			cts = new CancellationTokenSource();
 			await Task.Run(() =>
 			{
-				Sync.SyncAll(cts.Token, false, chkHttpLogging.Checked);
+				Sync.SyncAll(cts.Token, false, chkHttpLogging.Checked, lastsynctime);
 			});
+			SaveLastSyncTime();
 			EnableControls(true);
 		}
 
@@ -128,11 +144,12 @@ namespace SageConnector
 				}
 				// RUNS THE HISTORICAL INVOICE SYNC
 				EnableControls(false);
+				DateTime? lastsynctime = GetLastSyncTime();
 				btnStop.Enabled = false;
 				CancellationToken token = new CancellationToken();
 				await Task.Run(() =>
 				{
-					Sync.LoadHistoricalInvoices(hidlg.SelectedDate, chkHttpLogging.Checked);
+					Sync.LoadHistoricalInvoices(hidlg.SelectedDate, chkHttpLogging.Checked, lastsynctime);
 				}, token);
 				EnableControls(true);
 			}
@@ -237,5 +254,37 @@ namespace SageConnector
 			Properties.Settings.Default.EnableHTTPLogging = chkHttpLogging.Checked;
 			Properties.Settings.Default.Save();
 		}
+
+		// LAST SYNC TIME
+		private DateTime? GetLastSyncTime()
+		{
+			string path = string.Format("{0}\\LastSyncTime.dat", Application.StartupPath);
+			if(File.Exists(path))
+			{
+				DateTime dt = File.GetLastAccessTime(path);
+				if(dt.IsDaylightSavingTime())
+				{
+					dt = dt.AddHours(-1); // SAGE DOES NOT ACCOUNT FOR DAYLIGHT SAVING TIME
+				}
+				return dt;
+			}
+			else
+			{
+				return null; // FORCE A FULL SYNC
+			}
+		}
+
+		private void SaveLastSyncTime()
+		{
+			string path = string.Format("{0}\\LastSyncTime.dat", Application.StartupPath);
+			if (File.Exists(path))
+			{
+				File.Delete(path);
+			}
+			FileStream fs = File.Create(path);
+			fs.Close();
+
+		}
+		//
 	}
 }

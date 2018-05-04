@@ -19,6 +19,8 @@ namespace MTLib.Objects
 		public List<Phone> phones { get; set; }
 		public List<FundingMethod> fundingMethods { get; set; }
 		public List<string> emails { get; set; }
+		public List<string> remittanceEmails { get; set; }
+		public bool remittanceEnabled { get; set; }
 		public string memo { get; set; }
 		public string customerAccount { get; set; }
 		//public PrimarySubsidiary primarySubsidiary { get; set; }

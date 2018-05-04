@@ -77,10 +77,21 @@ namespace SyncLib
 
 			vendor.emails = new List<string>() { supplier.Contacts[0].Emails[0].Value };
 
+			Sage.Accounting.SystemManager.SYSTraderContactRole role = Sage.Accounting.SystemManager.SYSTraderContactRoleFactory.Factory.FetchSendRemittanceToRole();
+			Sage.Accounting.TradeLedger.TraderContact contact = supplier.GetPreferredContact(role);
+
+			vendor.remittanceEmails = null;
+			vendor.remittanceEnabled = false;
+
+			if (contact.Emails[0].Value.Length > 0)
+			{
+				vendor.remittanceEmails = new List<string>() { contact.Emails[0].Value };
+				vendor.remittanceEnabled = true;
+			}
+
+			vendor.memo = "";
 			if (supplier.Memos.Count > 0)
 				vendor.memo = supplier.Memos[0].Note; // JUST USE THE FIRST MEMO
-			else
-				vendor.memo = "";
 
 			vendor.customerAccount = supplier.SupplierBanks.PrimaryBank.BankAccountReference;
 			//vendor.primarySubsidiary = null;// new PrimarySubsidiary() {id = "1234" };
@@ -264,7 +275,7 @@ namespace SyncLib
 
 		#region PURCHASE ORDER
 
-		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(POPOrder poporder)
+		public static PurchaseOrderRoot SagePurchaseOrderToMTPurchaseOrder(string companyid, POPOrder poporder, string sessiontoken)
 		{
 			PurchaseOrderRoot purchaseorderroot = new PurchaseOrderRoot();
 			PurchaseOrder purchaseorder = new PurchaseOrder();
@@ -273,7 +284,7 @@ namespace SyncLib
 			purchaseorder.externalId = poporder.PrimaryKey.DbValue.ToString();
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(poporder.Supplier.PrimaryKey.DbValue.ToString());
+			Vendor vendor = MTApi.GetVendorByExternalID(companyid, sessiontoken, poporder.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			purchaseorder.vendor = new ObjID() { id = vendor.id };
 
@@ -292,10 +303,10 @@ namespace SyncLib
 
 				// 
 				// FIGURE OUT THE MT ID OF THE LINE ITEM
-				SageStockItem ssi = SageApi.GetStockItemByCode(line.ItemCode);
+				SageStockItem ssi = Sage200Api.GetStockItemByCode(line.ItemCode);
 				if (ssi != null)
 				{
-					Item mtitem = MTReferenceData.FindItemByExternalID(ssi.PrimaryKey.DbValue.ToString());
+					Item mtitem = MTApi.GetItemByExternalID(companyid, sessiontoken, ssi.PrimaryKey.DbValue.ToString());
 					if (mtitem != null)
 					{
 						item.companyItem = new ObjID() { id = mtitem.id };
@@ -339,7 +350,7 @@ namespace SyncLib
 
 		#region INVOICE/BILL
 
-		public static BillRoot SageInvoiceToMTBill(PostedPurchaseAccountEntry invoice)
+		public static BillRoot SageInvoiceToMTBill(string companyid, PostedPurchaseAccountEntry invoice, string sessiontoken)
 		{
 			BillRoot billroot = new BillRoot();
 			Bill bill = new Bill();
@@ -414,7 +425,7 @@ namespace SyncLib
 			bill.state = EnumMapper.SageDocumentStatusEnumToMTState(invoice.DocumentStatus);
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(invoice.Supplier.PrimaryKey.DbValue.ToString());
+			Vendor vendor = MTApi.GetVendorByExternalID(companyid, sessiontoken, invoice.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			bill.vendor = new ObjID() { id = vendor.id };
 
@@ -429,24 +440,24 @@ namespace SyncLib
 
 		#region CREDIT NOTES
 
-		public static CreditRoot SageCreditNoteToMTCredit(PostedPurchaseAccountEntry creditnote)
+		public static CreditRoot SageCreditNoteToMTCredit(string companyid, PostedPurchaseAccountEntry creditnote, string sessiontoken)
 		{
 			CreditRoot creditroot = new CreditRoot();
 			Credit credit = new Credit();
 
 			credit.id = "";
 			credit.externalId = creditnote.PrimaryKey.DbValue.ToString();
-			credit.creditNumber = creditnote.InstrumentNo;
+			credit.creditNumber = creditnote.SecondReferenceNo; // THIS WILL BE THE INVOICE NUMBER
 			credit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd");
 
 			// GET THE VENDOR ID FROM MINERAL TREE
-			Vendor vendor = MTReferenceData.FindVendorByExternalID(creditnote.Supplier.PrimaryKey.DbValue.ToString());
+			Vendor vendor = MTApi.GetVendorByExternalID(companyid, sessiontoken, creditnote.Supplier.PrimaryKey.DbValue.ToString());
 			if (vendor == null) { return null; }
 			credit.vendor = new ObjID() { id = vendor.id };
 
 			credit.amount = new Amount()
 			{
-				amount = PriceConverter.FromDecimal(creditnote.CoreDocumentGrossValue, 2),
+				amount = PriceConverter.FromDecimal(Math.Abs(creditnote.DocumentGrossValue), 2),
 				precision = 2
 			};
 			credit.status = "Open";
@@ -457,6 +468,23 @@ namespace SyncLib
 
 			creditroot.credit = credit;
 			return creditroot;
+		}
+
+		public static BillCreditRoot SageCreditNoteToMTBillCredit(string companyid, PostedPurchaseAccountEntry creditnote, string sessiontoken)
+		{
+			BillCreditRoot billcreditroot = new BillCreditRoot();
+			BillCredit billcredit = new BillCredit();
+
+			billcredit.transactionDate = creditnote.InstrumentDate.ToString("yyyy-MM-dd");
+
+			billcredit.amountApplied = new Amount()
+			{
+				amount = PriceConverter.FromDecimal(Math.Abs(creditnote.DocumentGrossValue), 2),
+				precision = 2
+			};
+
+			billcreditroot.billCredit = billcredit;
+			return billcreditroot;
 		}
 
 		#endregion
