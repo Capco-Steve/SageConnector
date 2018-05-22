@@ -94,24 +94,11 @@ namespace SyncLib
 				vendor.memo = supplier.Memos[0].Note; // JUST USE THE FIRST MEMO
 
 			vendor.customerAccount = supplier.SupplierBanks.PrimaryBank.BankAccountReference;
-			//vendor.primarySubsidiary = null;// new PrimarySubsidiary() {id = "1234" };
 			vendor.taxId = "";
 			vendor.vatNumber = supplier.TaxRegistrationCode;
-			
-			/*
-			VENDOR COMPANY DEFAULT IS NOT CURRENTLY SUPPORTED BY MT - EVEN THOUGH ITS IN THE DOCUMENTATION!!!!
 
-			vendor.vendorCompanyDefault = new VendorCompanyDefault()
-			{
-				defaultExpenseAccountId = null
-			};
-
-			GlAccount glaccount = MTReferenceData.FindGlAccountByAccountNumber(supplier.DefaultNominalAccountNumber);
-			if (glaccount != null)
-			{
-				vendor.vendorCompanyDefault.defaultExpenseAccountId = glaccount.id;
-			}
-			*/
+			// VENDOR COMPANY DEFAULT IS NOT CURRENTLY SUPPORTED BY MT - EVEN THOUGH ITS IN THE DOCUMENTATION!!!!
+			//vendor.vendorCompanyDefault = new VendorCompanyDefault();
 
 			vendorroot.vendor = vendor;
 			return vendorroot;
@@ -220,6 +207,25 @@ namespace SyncLib
 
 		#region PAYMENT TERMS
 
+		// NEEDS TO BE CHECKED AGAINST API WHEN DOCS AVAILABLE
+		public static TermRoot SagePaymentTermsToMTTerms(SageSupplier supplier)
+		{
+			TermRoot termroot = new TermRoot();
+			Term term = new Term();
+
+			term.id = "";
+			term.subsidiaries = null;
+			term.discountPercent = supplier.EarlySettlementDiscountPercent;
+			term.discountDays = supplier.EarlySettlementDiscountDays;
+			term.dueDays = supplier.PaymentTermsDays;
+			term.externalId = supplier.PrimaryKey.DbValue.ToString();
+			term.name = string.Format("Due Days: {0}, Discount Days: {0}, Discount Percent: {0}", supplier.PaymentTermsDays, supplier.EarlySettlementDiscountDays, supplier.EarlySettlementDiscountPercent);
+			term.active = true; // ??
+
+			termroot.term = term;
+			return termroot;
+		}
+		/*
 		public static TermRoot SagePaymentTermsToMTTerms(Tuple<decimal, int, int> terms)
 		{
 			TermRoot termroot = new TermRoot();
@@ -237,6 +243,7 @@ namespace SyncLib
 			termroot.term = term;
 			return termroot;
 		}
+		*/
 
 		#endregion
 
@@ -260,7 +267,7 @@ namespace SyncLib
 				{
 					availableBalance = new AvailableBalance()
 					{
-						amount = bank.BankAccount.Balance
+						amount = PriceConverter.FromDecimal(bank.BankAccount.BaseCurrencyBalance, 2)
 					}
 				}
 			};

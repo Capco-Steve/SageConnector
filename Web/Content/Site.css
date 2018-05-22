@@ -1,0 +1,25 @@
+﻿html, body {margin: 0; padding:0; font-size: 1em; font-family: Verdana;}
+
+/* HEADER */
+.Header {width: 100%;background-color: #C38D9E;}
+.HeaderLeft { color: #aa0377; font-size: 2em; padding: 20px; float: left;}
+.HeaderRight { color: #aa0377; float:right; margin-top: 30px; margin-right: 5px; }
+
+
+/* MAIN CONTENT AREA */
+.MainContent {margin: 10px; padding: 10px;}
+
+/* LOGIN BOX */
+.LoginDiv {width: 250px; margin:0 auto; margin-top: 50px}
+.LoginText {width: 100px; display:inline-block;}
+.LoginInput {width: 100px; display:inline-block; margin-top: 4px;}
+
+/* BUTTONS */
+.Button { width: 80px; color: #ffffff; background-color: #1f7b8a; padding: 10px; border-radius: 10px; border:none;}
+
+/* MENU */
+.Menu { width: 100%; background-color: #e8a87c; }
+.MenuItem { width: 150px; display: inline-block; text-align: center; padding: 5px 0px 5px 0px; color: #ffffff; background-color: #505157}
+.MenuItem a { text-decoration: none; color: #ffffff;}
+.MenuItemLast { width: 150px; display: inline-block; text-align: center; padding: 5px 0px 5px 0px; color: #ffffff; background-color: #505157; float: right; }
+.MenuItemLast a { text-decoration: none; color: #ffffff; }

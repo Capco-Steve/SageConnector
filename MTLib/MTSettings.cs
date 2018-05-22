@@ -22,11 +22,6 @@ namespace MTLib
 			get { return ConfigurationManager.AppSettings["MTPassword"]; }
 		}
 
-		//public static bool LogHTTPRequests
-		//{
-		//	get{ return ConfigurationManager.AppSettings["LogHTTPRequests"].ToLower() == "true" ? true : false; }
-		//}
-
 		public static string BaseUrl
 		{
 			get{ return ConfigurationManager.AppSettings["BaseUrl"];}

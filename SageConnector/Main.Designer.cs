@@ -33,12 +33,12 @@
 			this.txtResults = new System.Windows.Forms.TextBox();
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.btnLoadHistoricalInvoices = new System.Windows.Forms.Button();
-			this.btnFullSync = new System.Windows.Forms.Button();
-			this.btnQuickSync = new System.Windows.Forms.Button();
-			this.btnContinuousSync = new System.Windows.Forms.Button();
 			this.btnStop = new System.Windows.Forms.Button();
-			this.SyncTimer = new System.Windows.Forms.Timer(this.components);
+			this.btnContinuousSync = new System.Windows.Forms.Button();
+			this.btnQuickSync = new System.Windows.Forms.Button();
+			this.btnFullSync = new System.Windows.Forms.Button();
 			this.chkHttpLogging = new System.Windows.Forms.CheckBox();
+			this.SyncTimer = new System.Windows.Forms.Timer(this.components);
 			this.tableLayoutPanel1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -63,7 +63,7 @@
 			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30.0578F));
 			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 113F));
 			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 91F));
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 95F));
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 96F));
 			this.tableLayoutPanel1.Controls.Add(this.txtResults, 0, 0);
 			this.tableLayoutPanel1.Controls.Add(this.btnLoadHistoricalInvoices, 0, 2);
 			this.tableLayoutPanel1.Controls.Add(this.btnStop, 2, 2);
@@ -91,6 +91,39 @@
 			this.btnLoadHistoricalInvoices.UseVisualStyleBackColor = true;
 			this.btnLoadHistoricalInvoices.Click += new System.EventHandler(this.btnLoadHistoricalInvoices_Click);
 			// 
+			// btnStop
+			// 
+			this.btnStop.Anchor = System.Windows.Forms.AnchorStyles.Right;
+			this.btnStop.Location = new System.Drawing.Point(262, 353);
+			this.btnStop.Name = "btnStop";
+			this.btnStop.Size = new System.Drawing.Size(75, 23);
+			this.btnStop.TabIndex = 7;
+			this.btnStop.Text = "Stop";
+			this.btnStop.UseVisualStyleBackColor = true;
+			this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+			// 
+			// btnContinuousSync
+			// 
+			this.btnContinuousSync.Anchor = System.Windows.Forms.AnchorStyles.Right;
+			this.btnContinuousSync.Location = new System.Drawing.Point(346, 353);
+			this.btnContinuousSync.Name = "btnContinuousSync";
+			this.btnContinuousSync.Size = new System.Drawing.Size(104, 23);
+			this.btnContinuousSync.TabIndex = 6;
+			this.btnContinuousSync.Text = "Continuous Sync";
+			this.btnContinuousSync.UseVisualStyleBackColor = true;
+			this.btnContinuousSync.Click += new System.EventHandler(this.btnContinuousSync_Click);
+			// 
+			// btnQuickSync
+			// 
+			this.btnQuickSync.Anchor = System.Windows.Forms.AnchorStyles.Right;
+			this.btnQuickSync.Location = new System.Drawing.Point(466, 353);
+			this.btnQuickSync.Name = "btnQuickSync";
+			this.btnQuickSync.Size = new System.Drawing.Size(75, 23);
+			this.btnQuickSync.TabIndex = 5;
+			this.btnQuickSync.Text = "Quick Sync";
+			this.btnQuickSync.UseVisualStyleBackColor = true;
+			this.btnQuickSync.Click += new System.EventHandler(this.btnQuickSync_Click);
+			// 
 			// btnFullSync
 			// 
 			this.btnFullSync.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -101,43 +134,6 @@
 			this.btnFullSync.Text = "Full Sync";
 			this.btnFullSync.UseVisualStyleBackColor = true;
 			this.btnFullSync.Click += new System.EventHandler(this.btnFullSync_Click);
-			// 
-			// btnQuickSync
-			// 
-			this.btnQuickSync.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.btnQuickSync.Location = new System.Drawing.Point(468, 353);
-			this.btnQuickSync.Name = "btnQuickSync";
-			this.btnQuickSync.Size = new System.Drawing.Size(75, 23);
-			this.btnQuickSync.TabIndex = 5;
-			this.btnQuickSync.Text = "Quick Sync";
-			this.btnQuickSync.UseVisualStyleBackColor = true;
-			this.btnQuickSync.Click += new System.EventHandler(this.btnQuickSync_Click);
-			// 
-			// btnContinuousSync
-			// 
-			this.btnContinuousSync.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.btnContinuousSync.Location = new System.Drawing.Point(348, 353);
-			this.btnContinuousSync.Name = "btnContinuousSync";
-			this.btnContinuousSync.Size = new System.Drawing.Size(104, 23);
-			this.btnContinuousSync.TabIndex = 6;
-			this.btnContinuousSync.Text = "Continuous Sync";
-			this.btnContinuousSync.UseVisualStyleBackColor = true;
-			this.btnContinuousSync.Click += new System.EventHandler(this.btnContinuousSync_Click);
-			// 
-			// btnStop
-			// 
-			this.btnStop.Anchor = System.Windows.Forms.AnchorStyles.Right;
-			this.btnStop.Location = new System.Drawing.Point(264, 353);
-			this.btnStop.Name = "btnStop";
-			this.btnStop.Size = new System.Drawing.Size(75, 23);
-			this.btnStop.TabIndex = 7;
-			this.btnStop.Text = "Stop";
-			this.btnStop.UseVisualStyleBackColor = true;
-			this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
-			// 
-			// SyncTimer
-			// 
-			this.SyncTimer.Tick += new System.EventHandler(this.OnSyncTimer_Tick);
 			// 
 			// chkHttpLogging
 			// 
@@ -151,6 +147,10 @@
 			this.chkHttpLogging.TabIndex = 8;
 			this.chkHttpLogging.Text = "Enable HTTP Logging";
 			this.chkHttpLogging.UseVisualStyleBackColor = true;
+			// 
+			// SyncTimer
+			// 
+			this.SyncTimer.Tick += new System.EventHandler(this.OnSyncTimer_Tick);
 			// 
 			// Main
 			// 

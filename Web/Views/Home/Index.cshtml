@@ -1,0 +1,32 @@
+﻿@model Web.Models.LoginModel
+@using Web.Code;
+
+@{
+	ViewBag.Title = "Home Page";
+}
+
+@if (!SessionStateManager.IsLoggedIn())
+{
+	<div class="LoginDiv">
+
+		<form name="Login" action="/Home/Login" method="post">
+			<div class="LoginText">Username:</div>
+			<div class="LoginInput"><input type="text" name="Username" /></div>
+			<div class="LoginText">Password:</div>
+			<div class="LoginInput"><input type="password" name="Password" /></div>
+			<div class="LoginText"></div>
+			<div class="LoginInput"><input type="submit" id="btnLogin" class="Button" value="Login" /></div>
+		</form>
+
+	</div>
+}
+else
+{
+	<div class="Menu">
+		<div class="MenuItem"><a href="/Home/Versions">Versions</a></div>
+		<div class="MenuItemLast"><a href="/Logout">Logout</a></div>
+	</div>
+
+	<div class="MainContent">
+	</div>
+}

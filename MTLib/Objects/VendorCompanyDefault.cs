@@ -8,7 +8,6 @@ namespace MTLib.Objects
 {
 	public class VendorCompanyDefault
 	{
-		/*
 		public string defaultClassId { get; set; } = null;
 		public string defaultCustomerId { get; set; } = null;
 		public string defaultDepartmentId { get; set; } = null;
@@ -19,7 +18,6 @@ namespace MTLib.Objects
 		public string defaultTermsId { get; set; } = null;
 		public string defaultDebitAccountId { get; set; } = null;
 		public string defaultApAccountId { get; set; } = null;
-		*/
 		public string defaultExpenseAccountId { get; set; } = null;
 	}
 }

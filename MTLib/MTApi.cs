@@ -807,6 +807,67 @@ namespace MTLib
 
 		#region PAYMENT TERMS
 
+		// TODO: NEEDS TO BE CHECKED AGAINST API DOCS WHEN AVAILABLE
+		public static Term GetTermByExternalID(string companyid, string sessiontoken, string externalid)
+		{
+			Term term = null;
+			try
+			{
+				string url = string.Format("{0}{1}/{2}/objects", MTSettings.BaseUrl, MTSettings.SearchUrl, companyid);
+
+				SearchQuery query = new SearchQuery();
+				query.view = "TERMS";
+				query.query = string.Format("dimension_externalId=={0}", externalid);
+				query.page = 0;
+				query.count = 1;
+				query.sortField = "modified";
+				query.sortAsc = true;
+
+				string json = HTTPRequest(url, "POST", sessiontoken, JsonConvert.SerializeObject(query));
+
+				if (json.Length > 0)
+				{
+					JObject obj = JObject.Parse(json);
+					IList<JToken> results = obj["entities"].Children().ToList();
+
+					if (results.Count() == 1)
+					{
+						term = results[0].ToObject<Term>();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return term;
+		}
+
+		public static Term UpdateTerm(TermRoot termroot, string sessiontoken)
+		{
+			Term updatedterm = null;
+			try
+			{
+				string url = string.Format("{0}{1}", MTSettings.BaseUrl, MTSettings.TermUrl);
+				string json = HTTPRequest(url, "PUT", sessiontoken, JsonConvert.SerializeObject(termroot));
+
+				if (json.Length > 0)
+				{
+					updatedterm = JsonConvert.DeserializeObject<Term>(json);
+				}
+			}
+			catch (Exception ex)
+			{
+				updatedterm = null;
+				Logger.WriteLog(ex);
+				Error(string.Format("Exception: {0}, check log for details", ex.Message));
+			}
+
+			return updatedterm;
+		}
+
 		public static Term CreateTerm(string companyid, TermRoot termroot, string sessiontoken)
 		{
 			Term newterm = null;

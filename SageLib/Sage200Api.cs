@@ -328,36 +328,6 @@ namespace SageLib
 
 		#endregion
 
-		#region PAYMENT TERMS
-
-		public static List<Tuple<decimal, int, int>> GetPaymentTerms()
-		{
-			/*
-				PAYMENT TERMS ARE STORED AGAINST SUPPLIERS IN SAGE BUT AS SEPARATE OBJECTS IN MT SO WE NEED TO BUILD A UNIQUE LIST FROM SAGE
-			*/
-			List<Tuple<decimal, int, int>> distinctlist = new List<Tuple<decimal, int, int>>(); ;
-			if (application != null)
-			{
-				Sage.Accounting.PurchaseLedger.Suppliers suppliers = Sage.Accounting.PurchaseLedger.SuppliersFactory.Factory.CreateNew();
-				List<Tuple<decimal, int, int>> paymentterms = new List<Tuple<decimal, int, int>>();
-
-				foreach(Supplier supplier in suppliers.GetList().Cast<Supplier>().ToList())
-				{
-					paymentterms.Add(new Tuple<decimal, int, int>(supplier.EarlySettlementDiscountPercent, supplier.EarlySettlementDiscountDays, supplier.PaymentTermsDays));
-				}
-
-				var distinct = paymentterms.Select(item => new { item.Item1, item.Item2, item.Item3 }).Distinct();
-
-				foreach (var c in distinct)
-				{
-					distinctlist.Add(new Tuple<decimal, int, int>(c.Item1, c.Item2, c.Item3));
-				}
-			}
-			return distinctlist;
-		}
-
-		#endregion
-
 		#region PURCHASE ORDERS
 
 		public static List<POPOrder> GetLivePurchaseOrders()
@@ -496,23 +466,31 @@ namespace SageLib
 			Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry result = null;
 			if (application != null)
 			{
-				// PURCHASE INVOICES
-				Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
-				Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
+				try
+				{
+					// PURCHASE INVOICES
+					Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntries invoices = Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntriesFactory.Factory.CreateNew();
+					Sage.ObjectStore.Query query = new Sage.ObjectStore.Query();
 
-				Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
-				query.Filters.Add(filter);
+					Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_ENTRYTYPE, Sage.Accounting.TradingAccountEntryTypeEnum.TradingAccountEntryTypeInvoice);
+					query.Filters.Add(filter);
 
-				Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTNO, invoicenumber);
-				query.Filters.Add(filter1);
+					Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_INSTRUMENTNO, invoicenumber);
+					query.Filters.Add(filter1);
 
-				Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
-				Sage.ObjectStore.Filter filter2 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_SUPPLIERACCOUNTDBKEY, key);
-				query.Filters.Add(filter2);
+					Sage.Common.Data.DbKey key = new Sage.Common.Data.DbKey(Convert.ToInt32(id));
+					Sage.ObjectStore.Filter filter2 = new Sage.ObjectStore.Filter(Sage.Accounting.PurchaseLedger.PostedPurchaseAccountEntry.FIELD_SUPPLIERACCOUNTDBKEY, key);
+					query.Filters.Add(filter2);
 
-				invoices.Find(query);
+					invoices.Find(query);
 
-				result = invoices.First;
+					result = invoices.First;
+				}
+				catch(Exception ex)
+				{
+					result = null;
+					Logger.WriteLog(ex);
+				}
 			}
 
 			return result;
@@ -615,7 +593,7 @@ namespace SageLib
 
 		#region PAYMENTS
 
-		public static string CreatePayment(Supplier supplier, string bankid, string paymentdate, decimal netamount, decimal taxamount)
+		public static string CreatePayment(Supplier supplier, string bankid, string paymentdate, decimal netamount, decimal taxamount, string paymentreference)
 		{
 			string newid = "";
 			try
@@ -630,6 +608,9 @@ namespace SageLib
 
 					// SET THE SUPPLIER
 					payment.Supplier = supplier;
+
+					// REFERENCE
+					payment.InstrumentNo = paymentreference;
 
 					// SET THE RECEIPT DATE
 					payment.InstrumentDate = DateTime.ParseExact(paymentdate, "MM/dd/yyyy hh:mm:ss", CultureInfo.InvariantCulture);

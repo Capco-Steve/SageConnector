@@ -23,7 +23,6 @@ namespace MTLib.Objects
 		public bool remittanceEnabled { get; set; }
 		public string memo { get; set; }
 		public string customerAccount { get; set; }
-		//public PrimarySubsidiary primarySubsidiary { get; set; }
 		public string taxId { get; set; }
 		public string vatNumber { get; set; }
 		//public VendorCompanyDefault vendorCompanyDefault { get; set; }

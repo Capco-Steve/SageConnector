@@ -110,6 +110,7 @@ namespace SyncLib
 
 			if (fullsync)
 			{
+				
 				SageVatRatesToMineralTreeClasses(found.id, sessiontoken, lastsynctime);
 				if (!CanContinue(token)) { return; }
 				SageNominalCodesToMineralTreeGLAccounts(found.id, sessiontoken, lastsynctime);
@@ -126,10 +127,6 @@ namespace SyncLib
 				//if (!CanContinue(token)) { return; }
 				//SageCostCentresToMineralTreeLocations(found.id, sessiontoken);
 				//if (!CanContinue(token)) { return; }
-				// PAYMENT TERMS NOT FULLY IMPLEMENTED IN OPEN ACCOUNTING SYSTEM PLUS THERE IS NO WAY TO SEARCH FOR TERMS SO THIS THIS CODE HAS BEEN
-				// COMMENTED OUT UNTIL MINERAL TREE HAS FINISHED THE IMPLEMENTATION.
-				//SagePaymentTermsToMineralTreeTerms(found.id, sessiontoken);   // no update - moved to the historical invoice sync as it can only be run once
-				//if (!CanContinue(token)) { return; }
 			}
 			
 			SageLivePurchaseOrdersToMineralTreePurchaseOrders(found.id, sessiontoken);
@@ -140,6 +137,11 @@ namespace SyncLib
 			if (!CanContinue(token)) { return; }
 			NewMineralTreePaymentsToSagePayments(found.id, sessiontoken);
 			if (!CanContinue(token)) { return; }
+			// FUDGE TO GET AROUND THE FACT THAT MT TAKE A FEW SECONDS TO REBUILD INDEXES 
+			// SO YOU CAN'T SEARCH FOR NEW ITEMS IMMEDIATELY
+			// NEED TO DO THIS PROPERLY BY KEEPING A CACHE OF EVERYING WE CREATE IN A GIVEN SESSION
+			Thread.Sleep(6000);
+			// END FUDGE
 			SageCreditNotesToMineralTreeCredit(found.id, sessiontoken);
 			if (!CanContinue(token)) { return; }
 			
@@ -234,7 +236,9 @@ namespace SyncLib
 			Progress("Connected to Sage OK");
 			Progress(string.Format("Loading Invoices from {0} to Company: {1}", SyncSettings.SageCompanyNameToSync, found.name));
 
-			// VENDORS MUST BE SYNCED FIRST BECAUSE INVOICES HAVE A RELATIONSHIP WITH VENDORS
+			// VAT RATES, NOMINALS AND VENDORS MUST BE SYNCED FIRST
+			if (Continue) { SageVatRatesToMineralTreeClasses(found.id, sessiontoken, lastsynctime); }
+			if (Continue) { SageNominalCodesToMineralTreeGLAccounts(found.id, sessiontoken, lastsynctime); };
 			if (Continue) { SageSuppliersToMineralTreeVendors(found.id, sessiontoken, lastsynctime); }
 			if (Continue) { SageHistoricalInvoicesToMineralTreeBills(found.id, sessiontoken, from); };
 			
@@ -317,10 +321,57 @@ namespace SyncLib
 				Vendor found = MTApi.GetVendorByExternalID(companyid, sessiontoken, supplier.PrimaryKey.DbValue.ToString());
 				VendorRoot vendorroot = Mapper.SageSupplierToMTVendor(supplier);
 
+				// VENDOR DEFAULT - TO BE TESTED WHEN VENDOR DEFAULTS ARE ENABLED IN THE API
+				// NEED TO UNCOMMENT THE VENDORCOMPANYDEFAULT PROPERTY IN THE VENDOR OBJECT
+
+				/*
+				// CREATE/UPDATE VENDOR TERMS FIRST - MT STORES TERMS AS SEPARATE OBJECT TO VENDOR
+				Term term = MTApi.GetTermByExternalID(companyid, sessiontoken, supplier.PrimaryKey.DbValue.ToString());
+				TermRoot termroot = Mapper.SagePaymentTermsToMTTerms(supplier);
+
+				if(term == null)
+				{
+					// CREATE
+					term = MTApi.CreateTerm(companyid, termroot, sessiontoken);
+					if (!Continue) { return; }
+					Progress(string.Format("Supplier: {0}, Term {0} does not exist in MT - creating", supplier.Name, termroot.term.name));
+				}
+				else
+				{
+					// UPDATE
+					termroot.term.id = term.id;
+					term = MTApi.UpdateTerm(termroot, sessiontoken);
+					if (!Continue) { return; }
+					Progress(string.Format("Supplier: {0}, Term {0} already exists in MT - updating", supplier.Name, termroot.term.name));
+				}
+
+				// SET THE TERM ID IN THE VENDOR DEFAULTS
+				vendorroot.vendor.vendorCompanyDefault.defaultTermsId = term.id;
+
+				// DEFAULT NOMINAL CODE / EXPENSE ACCOUNT
+				NominalCode nominalcode = Sage200Api.GetNominalCodeByAccountNumber(supplier.DefaultNominalAccountNumber);
+				if (nominalcode != null)
+				{
+					GlAccount glaccount = MTApi.GetGlAccountByExternalID(companyid, sessiontoken, nominalcode.PrimaryKey.DbValue.ToString());
+					if (glaccount != null)
+					{
+						vendorroot.vendor.vendorCompanyDefault.defaultExpenseAccountId = glaccount.id;
+					}
+				}
+
+				// CLASSIFICATION / VAT RATE
+				Classification classification = MTApi.GetClassificationByExternalID(companyid, sessiontoken, supplier.DefaultTaxCode.PrimaryKey.DbValue.ToString());
+				if (classification != null)
+				{
+					vendorroot.vendor.vendorCompanyDefault.defaultClassId = classification.id;
+				}
+				//
+				*/
+
 				if (found == null)
 				{
 					// CREATE
-					Vendor newvendor = MTApi.CreateVendor(companyid, vendorroot, sessiontoken);
+					MTApi.CreateVendor(companyid, vendorroot, sessiontoken);
 					if (!Continue) { return; }
 					Progress(string.Format("Vendor {0} does not exist in MT - creating", supplier.Name));
 				}
@@ -372,7 +423,7 @@ namespace SyncLib
 					// CREATE
 					PaymentMethod newpaymentmethod = MTApi.CreatePaymentMethod(companyid, paymentmethodroot, sessiontoken);
 					if (!Continue) { return; }
-					Progress(string.Format("Payment Method {0} does not exist in MT - creating", bank.Name));
+					Progress(string.Format("Payment Method {0} ({1}) does not exist in MT - creating", bank.Name, bank.BankAccount.BaseCurrencyBalance));
 				}
 				else
 				{
@@ -381,11 +432,11 @@ namespace SyncLib
 					paymentmethodroot.paymentMethod.externalId = ""; // CAN'T UPDATE WITH AN EXTERNALID
 					MTApi.UpdatePaymentMethod(paymentmethodroot, sessiontoken);
 					if (!Continue) { return; }
-					Progress(string.Format("PaymentMethod {0} already exists in MT - updating", bank.Name));
+					Progress(string.Format("PaymentMethod {0} ({1}) already exists in MT - updating", bank.Name, bank.BankAccount.BaseCurrencyBalance));
 				}
 			}
 
-			Progress("Finish Syncing Cost Centres/Locations");
+			Progress("Finish Syncing Bank Accounts/Payment Methods");
 			return;
 		}
 
@@ -648,25 +699,6 @@ namespace SyncLib
 
 		#endregion
 
-		#region PAYMENT TERMS
-
-		private static void SagePaymentTermsToMineralTreeTerms(string companyid, string sessiontoken)
-		{
-			// GET ALL THE SAGE PAYMENT TERMS TO SYNC WITH MINERAL TREE
-			List<Tuple<decimal, int, int>> terms = Sage200Api.GetPaymentTerms();
-
-			foreach (Tuple<decimal, int, int> term in terms)
-			{
-				TermRoot termroot = Mapper.SagePaymentTermsToMTTerms(term);
-				MTApi.CreateTerm(companyid, termroot, sessiontoken);
-				if (!Continue) { return; }
-			}
-
-			return;
-		}
-
-		#endregion
-
 		#region PURCHASE ORDERS
 
 		private static void SageLivePurchaseOrdersToMineralTreePurchaseOrders(string companyid, string sessiontoken)
@@ -767,7 +799,15 @@ namespace SyncLib
 				if (bill == null)
 				{
 					BillRoot billroot = Mapper.SageInvoiceToMTBill(companyid, invoice, sessiontoken);
-					MTApi.CreateBill(companyid, billroot, sessiontoken);
+					if(billroot != null)
+					{
+						MTApi.CreateBill(companyid, billroot, sessiontoken);
+					}
+					else
+					{
+						Progress(string.Format("Mapping Failed for Invoice: {0}, Supplier: {1}", invoice.InstrumentNo, invoice.Supplier.Name));
+					}
+						
 					if (!Continue) { return; }
 
 					Progress(string.Format("Invoice {0} does not exist in MT - creating", invoice.InstrumentNo));
@@ -838,18 +878,24 @@ namespace SyncLib
 					List<LineItem> lineitems = new List<LineItem>();
 					foreach (CompanyItem item in bill.items)
 					{
-						if (item.glAccount != null && item.classification != null && item.department != null)
+						if (item.glAccount != null && item.classification != null)
 						{
 							lineitems.Add(new LineItem()
 							{
 								GLAccountID = item.glAccount.externalId,
-								DepartmentID = item.department.externalId,
 								ClassificationID = item.classification.externalId,
 								Description = item.description,
 								NetAmount = PriceConverter.ToDecimal(item.netAmount.amount, item.netAmount.precision),
 								TaxAmount = PriceConverter.ToDecimal(item.taxAmount.amount, item.taxAmount.precision)
 							});
 						}
+					}
+
+					if(lineitems.Count() != bill.items.Count())
+					{
+						// MISSING GLACCOUNT OR CLASSIFICATION (VAT)
+						Progress(string.Format("Missing GL Account or Classification (VAT Rate) for invoice: {0}, cannot create", bill.invoiceNumber));
+						continue;
 					}
 
 					newinvoiceid = Sage200Api.CreateInvoice(vendorroot.vendor.externalId, bill.invoiceNumber, bill.transactionDate, PriceConverter.ToDecimal(bill.amount.amount, bill.amount.precision), PriceConverter.ToDecimal(bill.totalTaxAmount.amount, bill.totalTaxAmount.precision), lineitems);
@@ -898,6 +944,9 @@ namespace SyncLib
 
 			foreach (Payment payment in payments)
 			{
+				// GRAB THE FIRST BILL INVOICE NUMBER TO USE AS A PAYMENT REFERENCE - NOTE THIS MUST BE REPLICATED IN MT
+				string paymentreference = "PAY-" + payment.bills[0].invoiceNumber;
+				//
 				SageSupplier supplier = Sage200Api.GetSupplierByPrimaryKey(payment.vendor.externalId);
 				decimal paymentamount = PriceConverter.ToDecimal(payment.amount.amount, payment.amount.precision);
 
@@ -911,7 +960,7 @@ namespace SyncLib
 					Progress(string.Format("Creating Payment for supplier {0}, amount {1}...", supplier.Name, paymentamount));
 				}
 
-				string id = Sage200Api.CreatePayment(supplier, payment.paymentMethod.externalId, payment.transactionDate, paymentamount, 0);
+				string id = Sage200Api.CreatePayment(supplier, payment.paymentMethod.externalId, payment.transactionDate, paymentamount, 0, paymentreference);
 
 				// UPDATE THE MT PAYMENT EXTERNAL ID WITH THE PRIMARY KEY FROM SAGE
 				if (id.Length > 0)
@@ -938,32 +987,33 @@ namespace SyncLib
 							allocation.Supplier = supplier;
 							allocation.AllocationDate = Sage.Common.Clock.Today;
 
+							// FIND THE INVOICE
 							Sage.ObjectStore.Filter filter = new Sage.ObjectStore.Filter(Sage.Accounting.TradeLedger.PostedTradingAccountEntry.FIELD_INSTRUMENTNO, invoice.InstrumentNo);
-
 							allocation.DebitEntries.Query.Filters.Add(filter);
 							allocation.DebitEntries.Find();
-
 							allocation.ResetDebitAllocationHandler(allocation.PurchaseDebitEntries);
 
-							Sage.Accounting.TradeLedger.TradingAllocationEntryView debitentry = allocation.DebitEntries.First;
+							// FIND THE PAYMENT
+							Sage.ObjectStore.Filter filter1 = new Sage.ObjectStore.Filter(Sage.Accounting.TradeLedger.PostedTradingAccountEntry.FIELD_INSTRUMENTNO, paymentreference);
+							allocation.CreditEntries.Query.Filters.Add(filter1);
+							allocation.CreditEntries.Find();
+							allocation.ResetCreditAllocationHandler(allocation.PurchaseCreditEntries);
 
-							if (debitentry != null)
+							Sage.Accounting.TradeLedger.TradingAllocationEntryView debitentry = allocation.DebitEntries.First;
+							Sage.Accounting.TradeLedger.TradingAllocationEntryView creditentry = allocation.CreditEntries.First;
+
+							if (debitentry != null && creditentry != null)
 							{
 								allocation.DebitEntries.First.AllocateThisTime = amount;
+								allocation.CreditEntries.First.AllocateThisTime = amount;
 								allocation.Validate();
 								allocation.Allocate();
 								Progress(string.Format("Allocated Payment of {0} to Invoice {1}", amount, bill.invoiceNumber));
 							}
 							else
 							{
-								Progress(string.Format("Payment Allocation to {0} Failed: Could not get Debit Entry", supplier.Name));
+								Progress(string.Format("Payment Allocation to {0} Failed: Could not get Debit/Credit Entry", supplier.Name));
 							}
-
-							// EVERYTHING WORKED SO UPDATE THE EXTERNAL ID IN MT
-							Payment update = new Payment(){id = payment.id, externalId = id};
-							PaymentRoot paymentroot = new PaymentRoot() { payment = update };
-							MTApi.UpdatePayment(paymentroot, sessiontoken);
-							if (!Continue) { return; }
 						}
 						catch(Exception ex)
 						{
@@ -976,6 +1026,12 @@ namespace SyncLib
 								allocation.Warnings -= new Sage.Common.DataAccess.BusinessObject.WarningHandler(PurchaseAllocationsAdjustment_Warnings);
 							}
 						}
+
+						// UPDATE THE EXTERNAL ID IN MT - IF THE ALLOCATIONS HAVE FAILED THEN THEY WILL HAVE TO BE CORRECTED BY HAND
+						Payment update = new Payment() { id = payment.id, externalId = id };
+						PaymentRoot paymentroot = new PaymentRoot() { payment = update };
+						MTApi.UpdatePayment(paymentroot, sessiontoken);
+						if (!Continue) { return; }
 					}
 				}
 				else

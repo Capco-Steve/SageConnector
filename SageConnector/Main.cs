@@ -16,6 +16,9 @@ using Utils;
 using Newtonsoft.Json;
 using Microsoft.Win32;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Diagnostics;
 
 namespace SageConnector
 {
@@ -36,6 +39,10 @@ namespace SageConnector
 			btnStop.Enabled = false;
 			chkHttpLogging.Enabled = true;
 			//FindSage200Assemblies();
+			//Task.Run(() =>
+			//{
+			//	CheckVersion();
+			//});
 		}
 
 		private void Sync_OnError(object sender, SyncEventArgs e)
@@ -103,10 +110,6 @@ namespace SageConnector
 
 		private async void btnFullSync_Click(object sender, EventArgs e)
 		{
-			//DateTime? dt = new DateTime(2018, 4, 30, 16, 20, 0);
-			//List<SageLib.Objects.Supplier> list = SageLib.Sage50.Sage50Api.GetSuppliers(null);
-			//return;
-			//
 			EnableControls(false);
 			DateTime? lastsynctime = GetLastSyncTime();
 			cts = new CancellationTokenSource();
@@ -144,18 +147,13 @@ namespace SageConnector
 				}
 				// RUNS THE HISTORICAL INVOICE SYNC
 				EnableControls(false);
-				DateTime? lastsynctime = GetLastSyncTime();
 				btnStop.Enabled = false;
 				CancellationToken token = new CancellationToken();
 				await Task.Run(() =>
 				{
-					Sync.LoadHistoricalInvoices(hidlg.SelectedDate, chkHttpLogging.Checked, lastsynctime);
+					Sync.LoadHistoricalInvoices(hidlg.SelectedDate, chkHttpLogging.Checked, null);
 				}, token);
 				EnableControls(true);
-			}
-			else
-			{
-				return;
 			}
 		}
 
@@ -199,6 +197,26 @@ namespace SageConnector
 			else
 			{
 				SyncTimer.Stop();
+			}
+		}
+
+		delegate void TooOldDelegate();
+		private void TooOld()
+		{
+			if (this.InvokeRequired)
+			{
+				TooOldDelegate d = new TooOldDelegate(TooOld);
+				this.Invoke(d, null);
+			}
+			else
+			{
+				if (MessageBox.Show("This version is out of date. Upgrade?", "Upgrade", MessageBoxButtons.YesNo) == DialogResult.Yes)
+				{
+					// START THE UPDATER
+					Process.Start("C:\\Windows\\System32\\notepad.exe");
+					// EXIT
+					Application.Exit();
+				}
 			}
 		}
 
@@ -286,5 +304,39 @@ namespace SageConnector
 
 		}
 		//
+
+		private bool CheckVersion()
+		{
+			// GET THE CURRENT VERSION OF THE ASSEMBLIES
+			System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+			Version version = assembly.GetName().Version;
+
+			WebClient client = new WebClient();
+			string str = client.DownloadString("http://aptimise/api/version");
+
+			TooOld();
+			//version.
+			// THE FOLLOWING ASSEMBLIES NEED TO BE UPDATED - WE ARE NOT BOTHERING TO UPDATE SAGE API ASSEMBLIES
+			// SageConnector.exe
+			// MTLib.dll
+			// SageLib.dll
+			// SyncLib.dll
+			// Utils.dll
+
+			// WE USE THE VERSION NUMBER OF SageConnector.exe TO DETERMINE THE VERSION - DON'T BOTHER WITH INDIVIDUAL 
+			// ASSEMBLY VERSIONS
+
+			// UPDATE SEQUENCE -- TODO: APP.CONFIG SETTINGS -- SQLLITE????
+			// 1. CHECK VERSION AGAINST REST ENDPOINT
+			// 2. IF OLDER THAN CURRENT
+			// 3. PROMPT USER TO UPDATE VIA MESSAGE BOX
+			// 4. IF YES
+			// 5. START UPDATER.EXE, CLOSE SAGECONNECTOR
+			// 6. UPDATER.EXE DOWNLOADS CURRENT VERSION AND INSTALLS NEW DLLS
+			// 7. UPDATER STARTS SAGECONNECTOR.EXE AND CLOSES ITSELF
+			// 8. FINISH
+			
+			return true;
+		}
 	}
 }
